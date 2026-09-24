@@ -8,7 +8,8 @@ import { getUserById } from "../db/user.collection"
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey"
 
-export interface AuthRequest extends Request {
+// ✅ FIX: Request type with generics for headers support
+export interface AuthRequest extends Request<any, any, any, any> {
   user?: {
     id: string
     role: string
