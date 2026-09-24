@@ -1,0 +1,429 @@
+// main-server/src/routes/buyer-requirement.routes.ts
+
+import express from "express"
+import { getDB } from "../db/mongo"
+
+const router = express.Router()
+
+// =====================================================
+// ✅ POST - Buyer posts requirement
+// =====================================================
+router.post("/post", async (req, res) => {
+  try {
+    const {
+      buyerId, buyerName, buyerEmail, buyerPhone,
+      productName, description, quantity, unit,
+      additionalNotes, preferredLocation, timeline
+    } = req.body
+
+    if (!buyerId || !productName || !description || !quantity) {
+      return res.status(400).json({ success: false, message: "Missing required fields" })
+    }
+
+    const requirement = {
+      requirementId: "REQ-" + Date.now(),
+      buyerId,
+      buyerName: buyerName || "Guest",
+      buyerEmail: buyerEmail || "",
+      buyerPhone: buyerPhone || "",
+      productName,
+      description,
+      quantity: Number(quantity),
+      unit: unit || "Units",
+      additionalNotes: additionalNotes || "",
+      deliveryLocation: preferredLocation || "",
+      deliveryTimeline: timeline || "",
+      status: "Pending",
+      quotes: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    const db = getDB()
+    await db.collection("buyer_requirements").insertOne(requirement)
+
+    res.status(201).json({
+      success: true,
+      message: "Requirement posted successfully!",
+      requirementId: requirement.requirementId
+    })
+
+  } catch (error) {
+    console.error("Error:", error)
+    res.status(500).json({ success: false, message: "Server error" })
+  }
+})
+
+// =====================================================
+// ✅ GET - Buyer gets their requirements
+// =====================================================
+router.get("/buyer/:buyerId", async (req, res) => {
+  try {
+    const db = getDB()
+    const requirements = await db.collection("buyer_requirements")
+      .find({ buyerId: req.params.buyerId })
+      .sort({ createdAt: -1 })
+      .toArray()
+
+    res.json({ success: true, data: requirements })
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" })
+  }
+})
+
+// =====================================================
+// ✅ GET - Sellers get ALL requirements
+// =====================================================
+router.get("/seller/:sellerId", async (req, res) => {
+  try {
+    const db = getDB()
+    const requirements = await db.collection("buyer_requirements")
+      .find({
+        status: { $in: ["Pending", "Quoted", "Accepted", "Closed"] }
+      })
+      .sort({ createdAt: -1 })
+      .toArray()
+
+    console.log("📦 Total requirements found:", requirements.length)
+    res.json({ success: true, data: requirements })
+  } catch (error) {
+    console.error("❌ Error fetching requirements:", error)
+    res.status(500).json({ success: false, message: "Server error" })
+  }
+})
+
+// =====================================================
+// ✅ POST - Seller sends quote — SAVES ALL FIELDS
+// =====================================================
+router.post("/quote", async (req, res) => {
+  try {
+    const {
+      requirementId, sellerId, sellerName,
+
+      // Original
+      originalPricePerUnit, originalTotal,
+
+      // Bulk
+      bulkPricePerUnit, bulkAmount, bulkGstAmount, gstPercent,
+
+      // Advance
+      advancePercent, advanceAmount, remainingAmount, remainingPercent,
+
+      // Final
+      priceToPay, totalQuantity, price, totalPrice,
+
+      // Delivery & notes
+      deliveryDate, message
+    } = req.body
+
+    console.log("📥 Quote received — FULL BODY:")
+    console.log(JSON.stringify(req.body, null, 2))
+
+    if (!requirementId || !sellerId || !price) {
+      return res.status(400).json({ success: false, message: "Missing fields" })
+    }
+
+    const db = getDB()
+    const requirement = await db.collection("buyer_requirements")
+      .findOne({ requirementId })
+
+    if (!requirement) {
+      return res.status(404).json({ success: false, message: "Requirement not found" })
+    }
+
+    // ✅ Save every field — no drop
+    const newQuote = {
+      sellerId,
+      sellerName: sellerName || "Seller",
+
+      // Original
+      originalPricePerUnit: Number(originalPricePerUnit) || 0,
+      originalTotal: Number(originalTotal) || 0,
+
+      // Bulk
+      bulkPricePerUnit: Number(bulkPricePerUnit) || 0,
+      bulkAmount: Number(bulkAmount) || 0,
+      bulkGstAmount: Number(bulkGstAmount) || 0,
+      gstPercent: Number(gstPercent) || 18,
+
+      // Advance
+      advancePercent: Number(advancePercent) || 40,
+      advanceAmount: Number(advanceAmount) || 0,
+      remainingAmount: Number(remainingAmount) || 0,
+      remainingPercent: Number(remainingPercent) || 60,
+
+      // Final
+      priceToPay: Number(priceToPay) || Number(totalPrice) || 0,
+      totalQuantity: Number(totalQuantity) || requirement.quantity || 0,
+      price: Number(price),
+      totalPrice: Number(totalPrice) || Number(price) * requirement.quantity,
+
+      // Extras
+      deliveryDate: deliveryDate || "",
+      message: message || "",
+
+      status: "Quoted",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    await db.collection("buyer_requirements").updateOne(
+      { requirementId },
+      {
+        $push: { quotes: newQuote },
+        $set: { status: "Quoted", updatedAt: new Date() }
+      }
+    )
+
+    // ✅ Notify buyer — both event names (frontend may listen either)
+    const io = req.app.get("io")
+    if (io) {
+      io.to(`buyer_${requirement.buyerId}`).emit("new-quote-on-requirement", {
+        requirementId,
+        sellerName: sellerName || "Seller",
+        price: Number(price)
+      })
+      io.to(`buyer_${requirement.buyerId}`).emit("new-quote", {
+        requirementId,
+        sellerName: sellerName || "Seller",
+        price: Number(price)
+      })
+      console.log(`📤 Emitted new-quote to buyer_${requirement.buyerId}`)
+    }
+
+    res.json({ success: true, message: "Quote sent successfully!" })
+  } catch (error) {
+    console.error("❌ Error sending quote:", error)
+    res.status(500).json({ success: false, message: "Server error" })
+  }
+})
+
+// =====================================================
+// ✅ PUT - Update quote — UPDATES ALL FIELDS + NOTIFY BUYER
+// =====================================================
+router.put("/update-quote/:requirementId", async (req, res) => {
+  try {
+    const { requirementId } = req.params
+    const {
+      sellerId,
+
+      // Original
+      originalPricePerUnit, originalTotal,
+
+      // Bulk
+      bulkPricePerUnit, bulkAmount, bulkGstAmount, gstPercent,
+
+      // Advance
+      advancePercent, advanceAmount, remainingAmount, remainingPercent,
+
+      // Final
+      priceToPay,
+
+      // Extras
+      deliveryDate, message
+    } = req.body
+
+    console.log("🔵 UPDATE QUOTE REQUEST:")
+    console.log(JSON.stringify(req.body, null, 2))
+
+    if (!requirementId || !sellerId) {
+      return res.status(400).json({ success: false, message: "Missing fields" })
+    }
+
+    const db = getDB()
+
+    // ✅ Build $set object with all fields
+    const updateFields: any = {
+      "quotes.$[elem].updatedAt": new Date(),
+      updatedAt: new Date()
+    }
+
+    if (originalPricePerUnit !== undefined)
+      updateFields["quotes.$[elem].originalPricePerUnit"] = Number(originalPricePerUnit) || 0
+
+    if (originalTotal !== undefined)
+      updateFields["quotes.$[elem].originalTotal"] = Number(originalTotal) || 0
+
+    if (bulkPricePerUnit !== undefined)
+      updateFields["quotes.$[elem].bulkPricePerUnit"] = Number(bulkPricePerUnit) || 0
+
+    if (bulkAmount !== undefined)
+      updateFields["quotes.$[elem].bulkAmount"] = Number(bulkAmount) || 0
+
+    if (bulkGstAmount !== undefined)
+      updateFields["quotes.$[elem].bulkGstAmount"] = Number(bulkGstAmount) || 0
+
+    if (gstPercent !== undefined)
+      updateFields["quotes.$[elem].gstPercent"] = Number(gstPercent) || 18
+
+    if (advancePercent !== undefined)
+      updateFields["quotes.$[elem].advancePercent"] = Number(advancePercent) || 40
+
+    if (advanceAmount !== undefined)
+      updateFields["quotes.$[elem].advanceAmount"] = Number(advanceAmount) || 0
+
+    if (remainingAmount !== undefined)
+      updateFields["quotes.$[elem].remainingAmount"] = Number(remainingAmount) || 0
+
+    if (remainingPercent !== undefined)
+      updateFields["quotes.$[elem].remainingPercent"] = Number(remainingPercent) || 60
+
+    if (priceToPay !== undefined)
+      updateFields["quotes.$[elem].priceToPay"] = Number(priceToPay) || 0
+
+    if (deliveryDate !== undefined)
+      updateFields["quotes.$[elem].deliveryDate"] = deliveryDate || ""
+
+    if (message !== undefined)
+      updateFields["quotes.$[elem].message"] = message || ""
+
+    // price / totalPrice follow priceToPay
+    if (priceToPay !== undefined) {
+      const reqDoc = await db.collection("buyer_requirements").findOne({ requirementId })
+      const qty = reqDoc?.quantity || 1
+      updateFields["quotes.$[elem].price"] = Number(priceToPay) / qty
+      updateFields["quotes.$[elem].totalPrice"] = Number(priceToPay)
+    }
+
+    const result = await db.collection("buyer_requirements").updateOne(
+      { requirementId },
+      { $set: updateFields },
+      {
+        arrayFilters: [{ "elem.sellerId": sellerId }]
+      }
+    )
+
+    console.log("✅ Update result:", result)
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Quote not found or nothing changed"
+      })
+    }
+
+    // ✅ Notify buyer of the update
+    const io = req.app.get("io")
+    if (io) {
+      const requirement = await db.collection("buyer_requirements").findOne({ requirementId })
+      if (requirement) {
+        io.to(`buyer_${requirement.buyerId}`).emit("quote-updated", {
+          requirementId,
+          sellerId,
+          newPrice: Number(priceToPay) || 0,
+          newTotalPrice: Number(priceToPay) || 0,
+          message: message || ""
+        })
+        console.log(`📤 Emitted quote-updated to buyer_${requirement.buyerId}`)
+      }
+    }
+
+    res.json({ success: true, message: "Quote updated successfully!" })
+
+  } catch (error: any) {
+    console.error("❌ Error updating quote:", error)
+    res.status(500).json({ success: false, message: error.message || "Server error" })
+  }
+})
+
+// =====================================================
+// ✅ PUT - Accept quote AND CREATE ORDER
+// =====================================================
+router.put("/accept-quote/:requirementId", async (req, res) => {
+  try {
+    const { requirementId } = req.params
+    const { sellerId, price, sellerName } = req.body
+
+    console.log("🔵 Accept quote request:", { requirementId, sellerId, price, sellerName })
+
+    const db = getDB()
+
+    const requirement = await db.collection("buyer_requirements").findOne({ requirementId })
+
+    if (!requirement) {
+      return res.status(404).json({ success: false, message: "Requirement not found" })
+    }
+
+    await db.collection("buyer_requirements").updateOne(
+      {
+        requirementId,
+        "quotes.sellerId": sellerId
+      },
+      {
+        $set: {
+          "quotes.$.status": "Accepted",
+          status: "Closed",
+          updatedAt: new Date()
+        }
+      }
+    )
+
+    // ✅ Find accepted quote to use GST-inclusive price
+    const acceptedQuote = requirement.quotes?.find((q: any) => q.sellerId === sellerId)
+    const finalAmount =
+      acceptedQuote?.priceToPay ||
+      acceptedQuote?.totalPrice ||
+      (requirement.quantity * price)
+
+    const orderId = "ORD" + Date.now() + Math.floor(Math.random() * 1000)
+
+    const orderData = {
+      orderId,
+      productName: requirement.productName,
+      sellerId,
+      buyerId: requirement.buyerId,
+      quantity: requirement.quantity,
+      price: acceptedQuote?.price || price,
+      totalAmount: finalAmount,
+      buyerName: requirement.buyerName || "Buyer",
+      productImage: requirement.productImage || "",
+      status: "Pending",
+      paymentStatus: "Pending",
+      paymentTerms: "Razorpay",
+      shippingAddress: requirement.deliveryLocation || "To be confirmed",
+
+      // ✅ Store pricing breakdown
+      originalTotal: acceptedQuote?.originalTotal || 0,
+      bulkAmount: acceptedQuote?.bulkAmount || 0,
+      bulkGstAmount: acceptedQuote?.bulkGstAmount || 0,
+      advancePercent: acceptedQuote?.advancePercent || 40,
+      advanceAmount: acceptedQuote?.advanceAmount || 0,
+      remainingAmount: acceptedQuote?.remainingAmount || 0,
+
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      tracking: [
+        {
+          status: "Order Created from Requirement",
+          timestamp: new Date(),
+          note: `Quote accepted from ${sellerName} at ₹${price}/unit`
+        }
+      ]
+    }
+
+    await db.collection("orders").insertOne(orderData)
+    console.log("✅ Order created:", orderId)
+
+    const io = req.app.get("io")
+    if (io) {
+      io.to(`seller_${sellerId}`).emit("new-order", {
+        orderId,
+        productName: requirement.productName,
+        buyerName: requirement.buyerName || "Buyer",
+        totalAmount: finalAmount
+      })
+    }
+
+    res.json({
+      success: true,
+      message: "Quote accepted! Order created!",
+      orderId
+    })
+
+  } catch (error: any) {
+    console.error("❌ Error accepting quote:", error)
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+export default router

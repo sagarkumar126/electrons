@@ -1,0 +1,710 @@
+import { useEffect, useState, useRef } from "react"
+import { categories } from "../../constants/categories"
+import { useLocation } from "react-router-dom"
+
+const SellerProducts = () => {
+
+  const formRef = useRef<HTMLDivElement | null>(null)
+
+  const [products, setProducts] = useState<any[]>([])
+
+  const [name, setName] = useState("")
+  const [details, setDetails] = useState("")
+  const [company, setCompany] = useState("")
+  const [category, setCategory] = useState("")
+
+  const [categorySearch, setCategorySearch] = useState("")
+
+  const [price, setPrice] = useState("")
+  const [stock, setStock] = useState("")
+
+  const [discount, setDiscount] = useState("")
+  const [discountEnabled, setDiscountEnabled] = useState(false)
+
+  const [imageInputs, setImageInputs] = useState([0])
+
+  const [imageFiles, setImageFiles] = useState<any[]>([])
+
+  const [extraFields, setExtraFields] = useState([
+    { title: "", description: "" }
+  ])
+
+  const [oldImage, setOldImage] = useState("")
+
+  const [editingId, setEditingId] = useState("")
+
+  const location = useLocation()
+
+  const query = new URLSearchParams(location.search)
+  const selectedCategory = query.get("category")
+
+  const user = JSON.parse(
+    localStorage.getItem("user") || "null"
+  )
+
+  const fetchProducts = async () => {
+
+    const res = await fetch(
+      `http://localhost:5000/api/products/seller/${user._id}`
+    )
+
+    const data = await res.json()
+
+    setProducts(data)
+  }
+
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const uploadImages = async () => {
+
+    const uploadedImages = []
+
+    for (let file of imageFiles) {
+
+      if (!file) continue
+
+      const formData = new FormData()
+
+      formData.append("image", file)
+
+      const res = await fetch(
+        "http://localhost:5000/api/upload",
+        {
+          method: "POST",
+          body: formData
+        }
+      )
+
+      const data = await res.json()
+
+      uploadedImages.push(data.imageUrl)
+    }
+
+    return uploadedImages
+  }
+
+  const addProduct = async () => {
+
+    const uploadedImages = await uploadImages()
+
+    await fetch(
+      "http://localhost:5000/api/products",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name,
+          details,
+          company,
+          category,
+          price,
+          stock,
+          discount,
+          discountEnabled,
+          sellerId: user._id,
+          image: uploadedImages[0] || "",
+          images: uploadedImages,
+          extraFields
+        })
+      }
+    )
+
+    clearForm()
+
+    fetchProducts()
+  }
+
+  const updateProduct = async () => {
+
+    let uploadedImages = []
+
+    if (imageFiles.length > 0) {
+      uploadedImages = await uploadImages()
+    }
+
+    await fetch(
+      `http://localhost:5000/api/products/${editingId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name,
+          details,
+          company,
+          category,
+          price,
+          stock,
+          discount,
+          discountEnabled,
+          image: uploadedImages[0] || oldImage,
+          images: uploadedImages,
+          extraFields
+        })
+      }
+    )
+
+    clearForm()
+
+    fetchProducts()
+  }
+
+  const deleteProduct = async (item: any) => {
+
+    const confirmDelete = window.confirm(
+      `Delete ${item.name}?`
+    )
+
+    if (!confirmDelete) return
+
+    await fetch(
+      `http://localhost:5000/api/products/${item._id}`,
+      {
+        method: "DELETE"
+      }
+    )
+
+    fetchProducts()
+  }
+
+  const editProduct = (item: any) => {
+
+    setEditingId(item._id)
+
+    setName(item.name)
+    setDetails(item.details)
+    setCompany(item.company)
+    setCategory(item.category)
+
+    setPrice(item.price)
+    setStock(item.stock)
+
+    setDiscount(item.discount || "")
+    setDiscountEnabled(item.discountEnabled || false)
+
+    setOldImage(item.image || "")
+
+    setExtraFields(
+      item.extraFields || [{ title: "", description: "" }]
+    )
+
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      })
+    }, 100)
+  }
+
+  const clearForm = () => {
+
+    setName("")
+    setDetails("")
+    setCompany("")
+    setCategory("")
+    setCategorySearch("")
+
+    setPrice("")
+    setStock("")
+
+    setDiscount("")
+    setDiscountEnabled(false)
+
+    setImageFiles([])
+
+    setImageInputs([0])
+
+    setExtraFields([
+      { title: "", description: "" }
+    ])
+
+    setOldImage("")
+
+    setEditingId("")
+
+    const fileInputs = document.querySelectorAll(
+      'input[type="file"]'
+    ) as NodeListOf<HTMLInputElement>
+
+    fileInputs.forEach((input) => {
+      input.value = ""
+    })
+  }
+
+  const discountedPrice =
+    discountEnabled && price
+      ? (
+          Number(price) -
+          (Number(price) * Number(discount || 0)) / 100
+        ).toFixed(2)
+      : price
+
+  return (
+    <div
+      style={{
+        background:
+          "linear-gradient(to bottom right,#ffffff,#f3f4f6,#dbeafe)",
+        minHeight: "100vh",
+        padding: "30px"
+      }}
+    >
+
+      <h1
+        style={{
+          textAlign: "center",
+          fontSize: "42px",
+          marginBottom: "35px",
+          background:
+            "linear-gradient(to right,#111827,#2563eb,#16a34a)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          fontWeight: "bold"
+        }}
+      >
+        Seller Products
+      </h1>
+
+      <div
+        ref={formRef}
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e5e7eb",
+          padding: "35px",
+          borderRadius: "24px",
+          boxShadow: "0 8px 25px rgba(0,0,0,0.08)",
+          marginBottom: "45px"
+        }}
+      >
+
+        <h2
+          style={{
+            marginBottom: "20px",
+            color: "#111827"
+          }}
+        >
+          {editingId ? "Update Product" : "Add Product"}
+        </h2>
+
+        <input
+          placeholder="Product Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={inputStyle}
+        />
+
+        <textarea
+          placeholder="Product Details"
+          value={details}
+          onChange={(e) => setDetails(e.target.value)}
+          style={{
+            ...inputStyle,
+            height: "140px"
+          }}
+        />
+
+        <input
+          placeholder="Company Name"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+          style={inputStyle}
+        />
+
+        <input
+          placeholder="Search Category..."
+          value={categorySearch}
+          onChange={(e) => setCategorySearch(e.target.value)}
+          style={inputStyle}
+        />
+
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          style={inputStyle}
+        >
+          <option value="">Select Category</option>
+
+          {categories
+            .filter((c) =>
+              c.toLowerCase().includes(categorySearch.toLowerCase())
+            )
+            .map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+        </select>
+
+        <input
+          placeholder="Price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          style={inputStyle}
+        />
+
+        <input
+          placeholder="Stock"
+          value={stock}
+          onChange={(e) => setStock(e.target.value)}
+          style={inputStyle}
+        />
+
+        <div style={{ marginTop: "20px" }}>
+
+          <label
+            style={{
+              fontWeight: "bold",
+              color: "#111827"
+            }}
+          >
+            Enable Discount
+          </label>
+
+          <input
+            type="checkbox"
+            checked={discountEnabled}
+            onChange={(e) =>
+              setDiscountEnabled(e.target.checked)
+            }
+            style={{
+              marginLeft: "10px",
+              transform: "scale(1.2)"
+            }}
+          />
+
+        </div>
+
+        {discountEnabled && (
+          <>
+            <input
+              placeholder="Discount %"
+              value={discount}
+              onChange={(e) => setDiscount(e.target.value)}
+              style={inputStyle}
+            />
+
+            <p
+              style={{
+                color: "#16a34a",
+                fontWeight: "bold",
+                fontSize: "18px"
+              }}
+            >
+              Final Price: ₹{discountedPrice}
+            </p>
+          </>
+        )}
+
+        <div style={{ marginTop: "25px" }}>
+
+          <button
+            onClick={() =>
+              setExtraFields([
+                ...extraFields,
+                { title: "", description: "" }
+              ])
+            }
+            style={buttonStyle}
+          >
+            + Add Title & Description
+          </button>
+
+          {extraFields.map((field, index) => (
+            <div
+              key={index}
+              style={{
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                padding: "18px",
+                borderRadius: "16px",
+                marginTop: "18px"
+              }}
+            >
+
+              <input
+                placeholder="Title"
+                value={field.title}
+                onChange={(e) => {
+                  const updated = [...extraFields]
+                  updated[index].title = e.target.value
+                  setExtraFields(updated)
+                }}
+                style={inputStyle}
+              />
+
+              <textarea
+                placeholder="Description"
+                value={field.description}
+                onChange={(e) => {
+                  const updated = [...extraFields]
+                  updated[index].description = e.target.value
+                  setExtraFields(updated)
+                }}
+                style={{
+                  ...inputStyle,
+                  height: "100px"
+                }}
+              />
+
+            </div>
+          ))}
+
+        </div>
+
+        <div style={{ marginTop: "30px" }}>
+
+          <button
+            onClick={() =>
+              setImageInputs([
+                ...imageInputs,
+                imageInputs.length
+              ])
+            }
+            style={{
+              ...buttonStyle,
+              background:
+                "linear-gradient(135deg,#2563eb,#1d4ed8)"
+            }}
+          >
+            + Add More Photos
+          </button>
+
+          {imageInputs.map((_, index) => (
+            <div
+              key={index}
+              style={{
+                marginTop: "16px",
+                background: "#f9fafb",
+                padding: "14px",
+                borderRadius: "14px",
+                border: "1px solid #e5e7eb"
+              }}
+            >
+
+              <input
+                type="file"
+                onChange={(e) => {
+                  const updated = [...imageFiles]
+
+                  updated[index] =
+                    e.target.files
+                      ? e.target.files[0]
+                      : null
+
+                  setImageFiles(updated)
+                }}
+              />
+
+            </div>
+          ))}
+
+        </div>
+
+        <br />
+
+        {editingId ? (
+          <button
+            onClick={updateProduct}
+            style={mainButton}
+          >
+            Update Product
+          </button>
+        ) : (
+          <button
+            onClick={addProduct}
+            style={mainButton}
+          >
+            Add Product
+          </button>
+        )}
+
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(320px,1fr))",
+          gap: "30px"
+        }}
+      >
+
+        {products
+          .filter((item) =>
+            selectedCategory
+              ? item.category === selectedCategory
+              : true
+          )
+          .map((item) => (
+
+            <div
+              key={item._id}
+              style={{
+                background:
+                  "linear-gradient(to bottom,#ffffff,#f9fafb)",
+                border: "1px solid #e5e7eb",
+                borderRadius: "24px",
+                overflow: "hidden",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                transition: "0.3s"
+              }}
+            >
+
+              {item.image && (
+                <img
+                  src={item.image}
+                  style={{
+                    width: "100%",
+                    height: "260px",
+                    objectFit: "cover"
+                  }}
+                />
+              )}
+
+              <div style={{ padding: "22px" }}>
+
+                <h2
+                  style={{
+                    color: "#111827",
+                    marginBottom: "10px"
+                  }}
+                >
+                  {item.name}
+                </h2>
+
+                <p
+                  style={{
+                    color: "#374151"
+                  }}
+                >
+                  {item.company}
+                </p>
+
+                <p
+                  style={{
+                    color: "#2563eb",
+                    fontWeight: "bold"
+                  }}
+                >
+                  {item.category}
+                </p>
+
+                <p
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    color: "#16a34a",
+                    textShadow:
+                      "0 1px 2px rgba(0,0,0,0.1)"
+                  }}
+                >
+                  ₹{item.price}
+                </p>
+
+                {item.discountEnabled && (
+                  <p
+                    style={{
+                      color: "#dc2626",
+                      background: "#fee2e2",
+                      padding: "8px",
+                      borderRadius: "10px",
+                      display: "inline-block",
+                      fontWeight: "bold"
+                    }}
+                  >
+                    Discount: {item.discount}%
+                  </p>
+                )}
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    marginTop: "22px"
+                  }}
+                >
+
+                  <button
+                    onClick={() => editProduct(item)}
+                    style={{
+                      ...buttonStyle,
+                      background:
+                        "linear-gradient(135deg,#2563eb,#1d4ed8)"
+                    }}
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => deleteProduct(item)}
+                    style={{
+                      ...buttonStyle,
+                      background:
+                        "linear-gradient(135deg,#dc2626,#991b1b)"
+                    }}
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          ))}
+
+      </div>
+
+    </div>
+  )
+}
+
+const inputStyle = {
+  width: "100%",
+  padding: "16px",
+  marginTop: "16px",
+  borderRadius: "14px",
+  border: "1px solid #d1d5db",
+  fontSize: "16px",
+  boxSizing: "border-box" as const,
+  background: "white",
+  color: "#111827",
+  outline: "none",
+  transition: "0.3s",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+}
+
+const buttonStyle = {
+  padding: "13px 22px",
+  border: "none",
+  borderRadius: "12px",
+  background:
+    "linear-gradient(135deg,#111827,#374151)",
+  color: "white",
+  cursor: "pointer",
+  fontSize: "15px",
+  fontWeight: "bold",
+  transition: "0.3s",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
+}
+
+const mainButton = {
+  padding: "16px 34px",
+  border: "none",
+  borderRadius: "14px",
+  background:
+    "linear-gradient(135deg,#16a34a,#15803d)",
+  color: "white",
+  cursor: "pointer",
+  fontSize: "18px",
+  fontWeight: "bold",
+  transition: "0.3s",
+  boxShadow: "0 6px 16px rgba(22,163,74,0.4)"
+}
+
+export default SellerProducts

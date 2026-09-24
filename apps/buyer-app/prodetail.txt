@@ -1,0 +1,70 @@
+import { useEffect, useState } from "react"
+import { useParams } from "react-router-dom"
+
+const ProductDetail = () => {
+
+  const { id } = useParams()
+  const [product, setProduct] = useState<any>(null)
+
+  useEffect(() => {
+
+    const fetchProduct = async () => {
+      const res = await fetch("http://localhost:5000/api/products")
+      const data = await res.json()
+
+      const found = data.find((p: any) => p._id === id)
+
+      setProduct(found || null)
+    }
+
+    fetchProduct()
+
+  }, [id])
+
+  if (!product) return <p>Loading...</p>
+
+  const finalPrice =
+    product.discountEnabled
+      ? Number(product.price) - (Number(product.price) * Number(product.discount || 0)) / 100
+      : product.price
+
+  return (
+    <div style={{ padding: 20 }}>
+
+      {product.image && (
+        <img
+          src={product.image}
+          style={{ width: "20%" }}
+        />
+      )}
+
+      <h2>{product.name}</h2>
+      <p>{product.details}</p>
+      <p>{product.company}</p>
+      <p>{product.category}</p>
+
+      <p>Price: ₹{product.price}</p>
+      <p>Discount: {product.discount}%</p>
+      <h3>Final: ₹{finalPrice}</h3>
+
+      <p>Stock: {product.stock}</p>
+
+      {/* EXTRA FIELDS */}
+      {product.extraFields?.length > 0 && (
+        <div>
+          <h3>Extra Info</h3>
+
+          {product.extraFields.map((f: any, i: number) => (
+            <div key={i}>
+              <b>{f.title}</b>
+              <p>{f.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+    </div>
+  )
+}
+
+export default ProductDetail

@@ -1,0 +1,220 @@
+import express from "express"
+import { getDB } from "../db/mongo"
+
+const router = express.Router()
+
+// ✅ POST - Buyer posts requirement
+router.post("/post", async (req, res) => {
+  try {
+    const {
+      buyerId, buyerName, buyerEmail, buyerPhone,
+      productName, description, quantity, unit,
+      additionalNotes
+    } = req.body
+
+    if (!buyerId || !productName || !description || !quantity) {
+      return res.status(400).json({ success: false, message: "Missing required fields" })
+    }
+
+    const requirement = {
+      requirementId: "REQ-" + Date.now(),
+      buyerId,
+      buyerName: buyerName || "Guest",
+      buyerEmail: buyerEmail || "",
+      buyerPhone: buyerPhone || "",
+      productName,
+      description,
+      quantity: Number(quantity),
+      unit: unit || "Units",
+      additionalNotes: additionalNotes || "",
+      status: "Pending",
+      quotes: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    const db = getDB()
+    await db.collection("buyer_requirements").insertOne(requirement)
+
+    res.status(201).json({
+      success: true,
+      message: "Requirement posted successfully!",
+      requirementId: requirement.requirementId
+    })
+
+  } catch (error) {
+    console.error("Error:", error)
+    res.status(500).json({ success: false, message: "Server error" })
+  }
+})
+
+// ✅ GET - Buyer gets their requirements
+router.get("/buyer/:buyerId", async (req, res) => {
+  try {
+    const db = getDB()
+    const requirements = await db.collection("buyer_requirements")
+      .find({ buyerId: req.params.buyerId })
+      .sort({ createdAt: -1 })
+      .toArray()
+
+    res.json({ success: true, data: requirements })
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" })
+  }
+})
+
+// ✅ GET - Sellers get ALL requirements (Pending, Quoted, Accepted, Closed)
+router.get("/seller/:sellerId", async (req, res) => {
+  try {
+    const db = getDB()
+    // ✅ 🔥 CHANGE YAHAN - Sab status wali requirements dikhao
+    const requirements = await db.collection("buyer_requirements")
+      .find({ 
+        status: { $in: ["Pending", "Quoted", "Accepted", "Closed"] }
+      })
+      .sort({ createdAt: -1 })
+      .toArray()
+
+    console.log("📦 Total requirements found:", requirements.length)
+    console.log("📦 Status distribution:", requirements.map((r: any) => ({ 
+      id: r.requirementId, 
+      status: r.status, 
+      product: r.productName 
+    })))
+
+    res.json({ success: true, data: requirements })
+  } catch (error) {
+    console.error("❌ Error fetching requirements:", error)
+    res.status(500).json({ success: false, message: "Server error" })
+  }
+})
+
+// ✅ POST - Seller sends quote
+router.post("/quote", async (req, res) => {
+  try {
+    const { requirementId, sellerId, sellerName, price, message } = req.body
+
+    if (!requirementId || !sellerId || !price) {
+      return res.status(400).json({ success: false, message: "Missing fields" })
+    }
+
+    const db = getDB()
+    const requirement = await db.collection("buyer_requirements")
+      .findOne({ requirementId })
+
+    if (!requirement) {
+      return res.status(404).json({ success: false, message: "Requirement not found" })
+    }
+
+    const newQuote = {
+      sellerId,
+      sellerName: sellerName || "Seller",
+      price: Number(price),
+      message: message || "",
+      status: "Quoted",
+      createdAt: new Date()
+    }
+
+    await db.collection("buyer_requirements").updateOne(
+      { requirementId },
+      {
+        $push: { quotes: newQuote },
+        $set: { status: "Quoted", updatedAt: new Date() }
+      }
+    )
+
+    res.json({ success: true, message: "Quote sent successfully!" })
+  } catch (error) {
+    console.error("❌ Error sending quote:", error)
+    res.status(500).json({ success: false, message: "Server error" })
+  }
+})
+
+// ✅ 🔥 PUT - Accept quote AND CREATE ORDER
+router.put("/accept-quote/:requirementId", async (req, res) => {
+  try {
+    const { requirementId } = req.params
+    const { sellerId, price, sellerName } = req.body
+
+    console.log("🔵 Accept quote request:", { requirementId, sellerId, price, sellerName })
+
+    const db = getDB()
+    
+    const requirement = await db.collection("buyer_requirements").findOne({ 
+      requirementId: requirementId 
+    })
+
+    if (!requirement) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Requirement not found" 
+      })
+    }
+
+    await db.collection("buyer_requirements").updateOne(
+      { 
+        requirementId: requirementId,
+        "quotes.sellerId": sellerId 
+      },
+      {
+        $set: { 
+          "quotes.$.status": "Accepted",
+          status: "Closed",
+          updatedAt: new Date()
+        }
+      }
+    )
+
+    const orderId = "ORD" + Date.now() + Math.floor(Math.random() * 1000)
+    
+    const orderData = {
+      orderId: orderId,
+      productName: requirement.productName,
+      sellerId: sellerId,
+      buyerId: requirement.buyerId,
+      quantity: requirement.quantity,
+      price: price,
+      totalAmount: requirement.quantity * price,
+      buyerName: requirement.buyerName || "Buyer",
+      productImage: requirement.productImage || "",
+      status: "Pending",
+      paymentStatus: "Pending",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      tracking: [
+        {
+          status: "Order Created from Requirement",
+          timestamp: new Date(),
+          note: `Quote accepted from ${sellerName} at ₹${price}/unit`
+        }
+      ]
+    }
+
+    await db.collection("orders").insertOne(orderData)
+    console.log("✅ Order created:", orderId)
+
+    const io = req.app.get("io")
+    if (io) {
+      io.to(`seller_${sellerId}`).emit("new-order", {
+        orderId: orderId,
+        productName: requirement.productName,
+        buyerName: requirement.buyerName || "Buyer",
+        totalAmount: requirement.quantity * price
+      })
+    }
+
+    res.json({ 
+      success: true, 
+      message: "Quote accepted! Order created!",
+      orderId: orderId
+    })
+  } catch (error: any) {
+    console.error("❌ Error accepting quote:", error)
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    })
+  }
+})
+
+export default router

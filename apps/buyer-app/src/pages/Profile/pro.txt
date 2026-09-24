@@ -1,0 +1,229 @@
+import { useEffect, useState } from "react"
+
+const Profile = () => {
+
+  const [form, setForm] = useState<any>({})
+
+  useEffect(() => {
+
+    const user = JSON.parse(
+      localStorage.getItem("user") || "{}"
+    )
+
+    setForm(user)
+
+  }, [])
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement
+    >
+  ) => {
+
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    })
+
+  }
+
+  const saveProfile = async () => {
+
+    try {
+
+      const res = await fetch(
+        `http://localhost:5000/api/auth/buyer/profile/${form._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(form)
+        }
+      )
+
+      const data = await res.json()
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(data)
+      )
+
+      alert("Profile Updated Successfully")
+
+    } catch (err) {
+
+      alert("Failed to update profile")
+
+    }
+  }
+
+  return (
+    <div
+      style={{
+        maxWidth: "900px",
+        margin: "30px auto",
+        background: "#fff",
+        padding: "25px",
+        borderRadius: "12px",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+      }}
+    >
+      <h1
+        style={{
+          marginBottom: "25px"
+        }}
+      >
+        Buyer Profile
+      </h1>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Name</label>
+        <input
+          value={form.name || ""}
+          disabled
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Email</label>
+        <input
+          value={form.email || ""}
+          disabled
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Phone Number</label>
+        <input
+          name="phone"
+          value={form.phone || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Company Name</label>
+        <input
+          name="companyName"
+          value={form.companyName || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Business Type</label>
+        <input
+          name="businessType"
+          value={form.businessType || ""}
+          onChange={handleChange}
+          placeholder="Retailer / Distributor / Wholesaler"
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Industry Type</label>
+        <input
+          name="industryType"
+          value={form.industryType || ""}
+          onChange={handleChange}
+          placeholder="Electronics"
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>GST Number</label>
+        <input
+          name="gstNumber"
+          value={form.gstNumber || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Country</label>
+        <input
+          name="country"
+          value={form.country || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>State</label>
+        <input
+          name="state"
+          value={form.state || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>City</label>
+        <input
+          name="city"
+          value={form.city || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Pincode</label>
+        <input
+          name="pincode"
+          value={form.pincode || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Address</label>
+        <textarea
+          name="address"
+          value={form.address || ""}
+          onChange={handleChange}
+          rows={4}
+          style={{
+            ...inputStyle,
+            resize: "vertical"
+          }}
+        />
+      </div>
+
+      <button
+        onClick={saveProfile}
+        style={{
+          padding: "12px 20px",
+          background: "#2563eb",
+          color: "#fff",
+          border: "none",
+          borderRadius: "8px",
+          cursor: "pointer"
+        }}
+      >
+        Save Profile
+      </button>
+    </div>
+  )
+}
+
+const inputStyle = {
+  width: "100%",
+  padding: "10px",
+  marginTop: "5px",
+  border: "1px solid #d1d5db",
+  borderRadius: "8px"
+}
+
+export default Profile

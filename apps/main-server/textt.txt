@@ -1,0 +1,232 @@
+import express from "express"
+import cors from "cors"
+import authRoutes from "./routes/auth.routes"
+import { connectDB, getDB } from "./db/mongo"
+import { products } from "./db/product.collection"
+import { ObjectId } from "mongodb"
+
+import { Server } from "socket.io"
+import http from "http"
+
+const app = express()
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}))
+
+app.use(express.json())
+
+app.get("/", (req, res) => {
+  res.send("Main Server is running 🚀")
+})
+
+app.use("/api/auth", authRoutes)
+
+app.post("/api/products", async (req, res) => {
+  try {
+    const { name, price, stock, sellerId } = req.body
+
+    const result = await products().insertOne({
+      name,
+      price: Number(price),
+      stock: Number(stock),
+      sellerId,
+      createdAt: new Date()
+    })
+
+    res.json({
+      message: "Product added successfully",
+      productId: result.insertedId
+    })
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.get("/api/products", async (req, res) => {
+  try {
+    const data = await products().find({}).toArray()
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.get("/api/products/seller/:sellerId", async (req, res) => {
+  try {
+    const { sellerId } = req.params
+    const data = await products().find({ sellerId }).toArray()
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.delete("/api/products/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const result = await products().deleteOne({
+      _id: new ObjectId(id)
+    })
+
+    res.json({
+      message: "Product deleted successfully",
+      result
+    })
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.put("/api/products/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+    const { name, price, stock } = req.body
+
+    const result = await products().updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          name,
+          price: Number(price),
+          stock: Number(stock)
+        }
+      }
+    )
+
+    res.json({
+      message: "Product updated successfully",
+      result
+    })
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.post("/api/orders", async (req, res) => {
+  try {
+    const { userId, items, total } = req.body
+
+    const order = {
+      userId,
+      items,
+      total,
+      status: "pending",
+      createdAt: new Date()
+    }
+
+    await getDB().collection("orders").insertOne(order)
+
+    res.json({
+      message: "Order placed successfully",
+      order
+    })
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.get("/api/orders/seller/:sellerId", async (req, res) => {
+  try {
+    const { sellerId } = req.params
+
+    const orders = await getDB()
+      .collection("orders")
+      .find({ "items.sellerId": sellerId })
+      .toArray()
+
+    res.json(orders)
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.post("/api/rfq", async (req, res) => {
+  try {
+    const { buyerId, productId, quantity, message } = req.body
+
+    const rfq = {
+      buyerId,
+      productId,
+      quantity,
+      message,
+      status: "pending",
+      createdAt: new Date()
+    }
+
+    await getDB().collection("rfq").insertOne(rfq)
+
+    res.json({
+      message: "RFQ sent successfully",
+      rfq
+    })
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.get("/api/rfq", async (req, res) => {
+  try {
+    const data = await getDB().collection("rfq").find({}).toArray()
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.put("/api/orders/status/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+    const { status } = req.body
+
+    const result = await getDB()
+      .collection("orders")
+      .updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status } }
+      )
+
+    res.json({
+      message: "Order status updated",
+      result
+    })
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.put("/api/rfq/respond/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+    const { price, message } = req.body
+
+    const result = await getDB()
+      .collection("rfq")
+      .updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            price,
+            message,
+            status: "quoted",
+            updatedAt: new Date()
+          }
+        }
+      )
+
+    res.json({
+      message: "RFQ responded successfully",
+      result
+    })
+  } catch (err) {
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
+app.listen(5000, async () => {
+  await connectDB()
+  console.log("Server running on port 5000")
+})

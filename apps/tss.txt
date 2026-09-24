@@ -1,0 +1,311 @@
+import express from "express"
+import cors from "cors"
+import path from "path"
+import http from "http"
+import { Server } from "socket.io"
+import { ObjectId } from "mongodb"
+
+import authRoutes from "./routes/auth.routes"
+import uploadRoutes from "./routes/upload"
+
+import { connectDB, getDB } from "./db/mongo"
+import { products } from "./db/product.collection"
+
+const app = express()
+const server = http.createServer(app)
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+})
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id)
+
+  socket.on("join_room", (roomId) => {
+    if (!roomId) return
+    socket.join(roomId)
+  })
+
+  socket.on("send_message", async (data) => {
+    try {
+      if (!data?.roomId || !data?.message) return
+
+      const msg = {
+        senderId: data.senderId,
+        receiverId: data.receiverId,
+        message: data.message,
+        productName: data.productName || "",
+        productImage: data.productImage || "",
+        createdAt: new Date()
+      }
+
+      await getDB().collection("chats").updateOne(
+        { roomId: data.roomId },
+        {
+          $setOnInsert: {
+            roomId: data.roomId,
+            messages: []
+          },
+          $push: {
+            messages: msg
+          }
+        },
+        { upsert: true }
+      )
+
+      io.to(data.roomId).emit("receive_message", msg)
+    } catch (err) {
+      console.log("Socket message error:", err)
+    }
+  })
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id)
+  })
+})
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}))
+
+app.use(express.json())
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")))
+
+app.use("/api/upload", uploadRoutes)
+app.use("/api/auth", authRoutes)
+
+app.get("/", (req, res) => {
+  res.send("Main Server Running 🚀")
+})
+
+/* ================= ⭐ CREATE PRODUCT ================= */
+
+app.post("/api/products", async (req, res) => {
+  try {
+    const product = req.body
+
+    if (!product?.sellerId) {
+      return res.status(400).json({
+        message: "sellerId required"
+      })
+    }
+
+    const result = await products().insertOne({
+      ...product,
+      createdAt: new Date()
+    })
+
+    res.json({
+      success: true,
+      productId: result.insertedId
+    })
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Failed to create product"
+    })
+  }
+})
+
+/* ================= ⭐ UPDATE PRODUCT ================= */
+
+app.put("/api/products/:id", async (req, res) => {
+  try {
+    const id = req.params.id
+
+    await products().updateOne(
+      { _id: new ObjectId(id) },
+      { $set: req.body }
+    )
+
+    res.json({
+      success: true
+    })
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Update failed"
+    })
+  }
+})
+
+/* ================= ⭐ DELETE PRODUCT (FIX ADDED) ================= */
+
+app.delete("/api/products/:id", async (req, res) => {
+  try {
+    const id = req.params.id
+
+    const result = await products().deleteOne({
+      _id: new ObjectId(id)
+    })
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        message: "Product not found"
+      })
+    }
+
+    res.json({
+      success: true,
+      message: "Product deleted"
+    })
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Delete failed"
+    })
+  }
+})
+
+/* ================= CHAT HISTORY FIX ================= */
+
+app.get("/api/chat/:roomId", async (req, res) => {
+  try {
+    const roomId = req.params.roomId
+
+    const chat = await getDB()
+      .collection("chats")
+      .findOne({ roomId })
+
+    if (!chat || !chat.messages) {
+      return res.json({
+        roomId,
+        messages: []
+      })
+    }
+
+    const messages = chat.messages.map((m: any) => ({
+      senderId: m.senderId || "",
+      receiverId: m.receiverId || "",
+      message: m.message || "",
+      productName: m.productName || "",
+      productImage: m.productImage || "",
+      createdAt: m.createdAt || new Date()
+    }))
+
+    return res.json({
+      roomId,
+      messages
+    })
+
+  } catch (err) {
+    return res.status(500).json({
+      message: "Failed to load chat"
+    })
+  }
+})
+
+app.get("/api/seller/profile/:id", async (req, res) => {
+  try {
+    const user = await getDB()
+      .collection("users")
+      .findOne({ _id: new ObjectId(req.params.id) })
+
+    if (!user) {
+      return res.status(404).json({ message: "Seller not found" })
+    }
+
+    res.json({
+      _id: user._id,
+      companyName: user.companyName || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      gstNumber: user.gstNumber || "",
+      yearsInBusiness: user.yearsInBusiness || "",
+      kycStatus: user.kycStatus || "Pending",
+      panNumber: user.panNumber || "",
+      businessRegNumber: user.businessRegNumber || "",
+      address: user.address || "",
+      storeDescription: user.storeDescription || "",
+      isDistributor: user.isDistributor || false
+    })
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch seller profile" })
+  }
+})
+
+app.put("/api/seller/update-profile", async (req, res) => {
+  try {
+    const user = req.body
+
+    if (!user?._id) {
+      return res.status(400).json({
+        message: "User ID missing"
+      })
+    }
+
+    const id = new ObjectId(user._id)
+
+    delete user._id
+
+    await getDB()
+      .collection("users")
+      .updateOne(
+        { _id: id },
+        {
+          $set: {
+            ...user,
+            updatedAt: new Date()
+          }
+        }
+      )
+
+    const updated = await getDB()
+      .collection("users")
+      .findOne({ _id: id })
+
+    return res.json({
+      success: true,
+      user: {
+        _id: updated?._id,
+        companyName: updated?.companyName || "",
+        email: updated?.email || "",
+        phone: updated?.phone || "",
+        gstNumber: updated?.gstNumber || "",
+        yearsInBusiness: updated?.yearsInBusiness || "",
+        kycStatus: updated?.kycStatus || "Pending",
+        panNumber: updated?.panNumber || "",
+        businessRegNumber: updated?.businessRegNumber || "",
+        address: updated?.address || "",
+        storeDescription: updated?.storeDescription || "",
+        isDistributor: updated?.isDistributor || false
+      }
+    })
+  } catch (err) {
+    console.log("PROFILE UPDATE ERROR:", err)
+    res.status(500).json({
+      message: "Failed to update profile"
+    })
+  }
+})
+
+app.get("/api/products", async (req, res) => {
+  const data = await products().find({}).toArray()
+  res.json(data)
+})
+
+app.get("/api/products/:id", async (req, res) => {
+  const data = await products().findOne({
+    _id: new ObjectId(req.params.id)
+  })
+  res.json(data)
+})
+
+app.get("/api/products/seller/:sellerId", async (req, res) => {
+  const data = await products()
+    .find({ sellerId: req.params.sellerId })
+    .toArray()
+
+  res.json(data)
+})
+
+server.listen(5000, async () => {
+  await connectDB()
+  console.log("Server running on port 5000")
+})

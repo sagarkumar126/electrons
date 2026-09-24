@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment Files (⚠️ NEVER PUSH)
+.env
+.env.local
+.env.production
+.env.development
+**/.env
+**/.env.local
+**/.env.production
+**/.env.development
+
+# Builds
+dist/
+build/
+**/dist/
+**/build/
+
+# Logs
+*.log
+**/logs/
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads
+**/uploads/
+uploads/
+
+
+# Screenshots and temp Products folder
+apps/Products__/
+Products__/

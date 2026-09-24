@@ -1,0 +1,331 @@
+import { useEffect, useState } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+
+const ProductDetail = () => {
+  const { id } = useParams()
+
+  const navigate = useNavigate()
+
+  const [product, setProduct] = useState<any>(null)
+  const [currentImage, setCurrentImage] = useState(0)
+  const [companyProfile, setCompanyProfile] = useState<any>(null)
+  const [showCompany, setShowCompany] = useState(false)
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/products/${id}`)
+        const data = await res.json()
+
+        const updatedProduct = {
+          ...data,
+          image: data.image
+            ? data.image.startsWith("http")
+              ? data.image
+              : `http://localhost:5000${data.image}`
+            : "",
+          extraImages: (
+            Array.isArray(data.extraImages)
+              ? data.extraImages
+              : Array.isArray(data.images)
+              ? data.images
+              : []
+          ).map((img: string) =>
+            img.startsWith("http")
+              ? img
+              : `http://localhost:5000${img}`
+          )
+        }
+
+        setProduct(updatedProduct)
+      } catch (err) {
+        console.log("Product fetch failed", err)
+      }
+    }
+
+    fetchProduct()
+  }, [id])
+
+  const fetchCompanyProfile = async () => {
+    if (!product?.sellerId) return
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/seller/profile/${product.sellerId}`
+      )
+
+      const data = await res.json()
+
+      if (!res.ok) return
+
+      setCompanyProfile({
+        companyName: data.companyName || "N/A",
+        email: data.email || "N/A",
+        phone: data.phone || "N/A",
+        address: data.address || "Not provided",
+        storeDescription: data.storeDescription || "No description available",
+        gstNumber: data.gstNumber || "N/A",
+        yearsInBusiness: data.yearsInBusiness || "N/A",
+        kycStatus: data.kycStatus || "N/A",
+        panNumber: data.panNumber || "N/A",
+        businessRegNumber: data.businessRegNumber || "N/A",
+        isDistributor: data.isDistributor ?? false
+      })
+
+      setShowCompany(true)
+    } catch (err) {
+      console.log("Unable to fetch seller profile", err)
+    }
+  }
+
+  if (!product)
+    return (
+      <div style={{ padding: 40, textAlign: "center", fontSize: 18 }}>
+        Loading product details...
+      </div>
+    )
+
+  const allImages = [product.image, ...(product.extraImages || [])].filter(Boolean)
+
+  const nextImage = () =>
+    setCurrentImage((prev) =>
+      prev === allImages.length - 1 ? 0 : prev + 1
+    )
+
+  const prevImage = () =>
+    setCurrentImage((prev) =>
+      prev === 0 ? allImages.length - 1 : prev - 1
+    )
+
+  const finalPrice =
+    product.discountEnabled
+      ? (
+          Number(product.price) -
+          (Number(product.price) * Number(product.discount || 0)) / 100
+        ).toFixed(2)
+      : product.price
+
+  return (
+    <div
+      style={{
+        padding: "40px",
+        background: "linear-gradient(135deg,#f8fafc,#e0f2fe,#eef2ff)",
+        minHeight: "100vh",
+        fontFamily: "Arial, sans-serif"
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "950px",
+          margin: "auto",
+          background: "#ffffff",
+          borderRadius: "20px",
+          overflow: "hidden",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+          border: "1px solid #e5e7eb"
+        }}
+      >
+        {/* IMAGE SECTION */}
+        {allImages.length > 0 && (
+          <div style={{ padding: 20 }}>
+            <div style={{ position: "relative" }}>
+              <img
+                src={allImages[currentImage]}
+                style={{
+                  width: "100%",
+                  height: "380px",
+                  objectFit: "contain",
+                  borderRadius: "16px",
+                  background: "#f9fafb",
+                  border: "1px solid #eee"
+                }}
+              />
+
+              {allImages.length > 1 && (
+                <>
+                  <button onClick={prevImage} style={navBtnStyle("left")}>❮</button>
+                  <button onClick={nextImage} style={navBtnStyle("right")}>❯</button>
+                </>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: 12, marginTop: 15, overflowX: "auto" }}>
+              {allImages.map((img: string, i: number) => (
+                <img
+                  key={i}
+                  src={img}
+                  onClick={() => setCurrentImage(i)}
+                  style={{
+                    width: 75,
+                    height: 75,
+                    objectFit: "cover",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    border:
+                      currentImage === i
+                        ? "3px solid #3b82f6"
+                        : "1px solid #ddd"
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* PRODUCT INFO */}
+        <div style={{ padding: 25 }}>
+          <h1 style={{ fontSize: 28 }}>{product.name}</h1>
+
+          <p><b>Company:</b> {product.company || "N/A"}</p>
+
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "10px" }}>
+            <button style={btnPrimary} onClick={fetchCompanyProfile}>
+              View Distributor Details
+            </button>
+
+
+
+<button
+  style={chatBtn}
+  onClick={() => {
+    const sellerId = product?.sellerId
+
+    if (!sellerId) {
+      console.log("SellerId missing:", product)
+      return
+    }
+
+    navigate(`/chat/${sellerId}`, {
+      state: {
+        productId: product._id,
+        productName: product.name,
+        productImage: product.image
+      }
+    })
+  }}
+>
+  💬 Chat with Seller
+</button>
+
+          </div>
+
+          {showCompany && companyProfile && (
+            <div style={cardBox}>
+              <h3>Company Info</h3>
+
+              <p><b>Company:</b> {companyProfile.companyName}</p>
+              <p><b>Email:</b> {companyProfile.email}</p>
+              <p><b>Phone:</b> {companyProfile.phone}</p>
+              <p><b>GST:</b> {companyProfile.gstNumber}</p>
+              <p><b>Years:</b> {companyProfile.yearsInBusiness}</p>
+              <p><b>KYC:</b> {companyProfile.kycStatus}</p>
+              <p><b>PAN:</b> {companyProfile.panNumber}</p>
+              <p><b>Reg No:</b> {companyProfile.businessRegNumber}</p>
+              <p><b>Distributor:</b> {companyProfile.isDistributor ? "Yes" : "No"}</p>
+              <p><b>Description:</b> {companyProfile.storeDescription}</p>
+              <p><b>Address:</b> {companyProfile.address}</p>
+            </div>
+          )}
+
+          <p><b>Category:</b> {product.category || "N/A"}</p>
+          <p><b>Stock:</b> {product.stock}</p>
+
+          {product.discountEnabled ? (
+            <>
+              <p style={{ textDecoration: "line-through", color: "#888" }}>
+                ₹{product.price}
+              </p>
+
+              <p style={{ fontSize: 26, fontWeight: "bold", color: "#16a34a" }}>
+                ₹{finalPrice}
+              </p>
+
+              <span style={badge}>
+                {product.discount}% OFF
+              </span>
+            </>
+          ) : (
+            <p style={{ fontSize: 26, fontWeight: "bold", color: "#16a34a" }}>
+              ₹{product.price}
+            </p>
+          )}
+
+          <div style={{ marginTop: 20 }}>
+            <b>Details:</b>
+            <p>{product.details}</p>
+          </div>
+
+          {product.extraFields?.length > 0 && (
+            <div style={cardBox}>
+              <h3>Extra Information</h3>
+
+              {product.extraFields.map((field: any, i: number) => (
+                <div key={i} style={{ marginBottom: 15, paddingBottom: 10, borderBottom: "1px solid #e5e7eb" }}>
+                  <b>{field.title}</b>
+                  <br />
+                  <span style={{ color: "#444" }}>{field.description}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* styles */
+const navBtnStyle = (side: "left" | "right") => ({
+  position: "absolute" as const,
+  top: "50%",
+  [side]: "10px",
+  transform: "translateY(-50%)",
+  background: "rgba(0,0,0,0.6)",
+  color: "#fff",
+  border: "none",
+  borderRadius: "50%",
+  width: 40,
+  height: 40,
+  cursor: "pointer"
+})
+
+const btnPrimary = {
+  marginTop: 10,
+  padding: "10px 16px",
+  background: "#3b82f6",
+  color: "#fff",
+  border: "none",
+  borderRadius: 10,
+  cursor: "pointer"
+}
+
+const chatBtn = {
+  marginTop: 10,
+  padding: "10px 16px",
+  background: "linear-gradient(135deg,#16a34a,#15803d)",
+  color: "#fff",
+  border: "none",
+  borderRadius: 10,
+  cursor: "pointer",
+  fontWeight: "bold"
+}
+
+const badge = {
+  display: "inline-block",
+  marginTop: 10,
+  background: "#fee2e2",
+  color: "#dc2626",
+  padding: "5px 10px",
+  borderRadius: 8,
+  fontWeight: "bold"
+}
+
+const cardBox = {
+  marginTop: 15,
+  padding: 15,
+  background: "#f9fafb",
+  borderRadius: 12,
+  border: "1px solid #e5e7eb"
+}
+
+export default ProductDetail
