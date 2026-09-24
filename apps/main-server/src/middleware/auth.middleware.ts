@@ -1,5 +1,5 @@
 // =====================================================
-// middleware/auth.middleware.ts (Updated with adminMiddleware)
+// middleware/auth.middleware.ts
 // =====================================================
 
 import { Request, Response, NextFunction } from "express"
@@ -8,12 +8,17 @@ import { getUserById } from "../db/user.collection"
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey"
 
-// ✅ FIX: Request type with generics for headers support
-export interface AuthRequest extends Request<any, any, any, any> {
+// ✅ FIX: Use any for Request — avoids Express 5 type issues
+export interface AuthRequest extends Request {
   user?: {
     id: string
     role: string
   }
+}
+
+// ✅ Helper to safely get headers
+const getAuthHeader = (req: any): string | undefined => {
+  return req.headers?.authorization
 }
 
 export const authMiddleware = async (
@@ -22,7 +27,7 @@ export const authMiddleware = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization
+    const authHeader = getAuthHeader(req)
 
     if (!authHeader) {
       return res.status(401).json({
@@ -42,7 +47,6 @@ export const authMiddleware = async (
 
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string }
 
-    // ✅ Verify user still exists in database
     const user = await getUserById(decoded.id)
     
     if (!user) {
@@ -66,7 +70,6 @@ export const authMiddleware = async (
   }
 }
 
-// ✅ Naya: Role-based middleware (Admin/Seller/Buyer)
 export const roleMiddleware = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
@@ -87,14 +90,13 @@ export const roleMiddleware = (roles: string[]) => {
   }
 }
 
-// ✅ ADMIN MIDDLEWARE - YEH ADD KARO
 export const adminMiddleware = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization
+    const authHeader = getAuthHeader(req)
 
     if (!authHeader) {
       return res.status(401).json({
@@ -114,7 +116,6 @@ export const adminMiddleware = async (
 
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string; role: string }
 
-    // ✅ Verify user still exists in database
     const user = await getUserById(decoded.id)
     
     if (!user) {
@@ -124,7 +125,6 @@ export const adminMiddleware = async (
       })
     }
 
-    // ✅ Check if user is admin
     if (user.role !== "admin") {
       return res.status(403).json({
         success: false,
