@@ -112,7 +112,7 @@ const SellerProducts = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/categories/all")
+        const res = await fetch("http://https://electrons-1.onrender.com/api/categories/all")
         const data = await res.json()
         setApiCategories(data.data || [])
       } catch (err) {
@@ -124,7 +124,7 @@ const SellerProducts = () => {
 
   const fetchProducts = async () => {
     const res = await fetch(
-      `http://localhost:5000/api/products/seller/${user._id}`
+      `http://https://electrons-1.onrender.com/api/products/seller/${user._id}`
     )
     const data = await res.json()
     setProducts(data || [])
@@ -195,7 +195,7 @@ const SellerProducts = () => {
       if (!file) continue
       const formData = new FormData()
       formData.append("image", file)
-      const res = await fetch("http://localhost:5000/api/upload", {
+      const res = await fetch("http://https://electrons-1.onrender.com/api/upload", {
         method: "POST",
         body: formData
       })
@@ -286,7 +286,7 @@ const SellerProducts = () => {
 
     const uploadedImages = await uploadImages()
 
-    await fetch("http://localhost:5000/api/products", {
+    await fetch("http://https://electrons-1.onrender.com/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -327,7 +327,7 @@ const SellerProducts = () => {
     }
     const finalImages = [...oldImages, ...uploadedImages]
 
-    await fetch(`http://localhost:5000/api/products/${editingId}`, {
+    await fetch(`http://https://electrons-1.onrender.com/api/products/${editingId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
