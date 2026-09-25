@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const Search = () => {
 
@@ -13,9 +14,7 @@ const Search = () => {
 
   const fetchProducts = async () => {
 
-    const res = await fetch(
-      "http://localhost:5000/api/products"
-    )
+    const res = await fetch(`${API_URL}/products`)
 
     const data = await res.json()
 

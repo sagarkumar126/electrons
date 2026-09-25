@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const Payment = () => {
   const navigate = useNavigate()
@@ -17,11 +18,10 @@ const Payment = () => {
 
   const fetchOrder = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}`)
+      const res = await fetch(`${API_URL}/orders/${orderId}`)
       const data = await res.json()
       setOrderDetails(data)
       
-      // ✅ AGAR PAYMENT PAID HAI TOH DIRECT ORDERS PE BHEJO
       if (data.paymentStatus === "Paid") {
         navigate("/orders")
       }
@@ -40,7 +40,6 @@ const Payment = () => {
     })
   }
 
-  // ✅ REAL PAYMENT
   const processPayment = async () => {
     setLoading(true)
     try {
@@ -70,8 +69,7 @@ const Payment = () => {
         handler: async function(response: any) {
           console.log("✅ Payment success:", response)
           
-          // ✅ VERIFY PAYMENT
-          const verifyRes = await fetch("http://localhost:5000/api/payment/verify-payment", {
+          const verifyRes = await fetch(`${API_URL}/payment/verify-payment`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -87,7 +85,6 @@ const Payment = () => {
           
           if (verifyData.success) {
             alert("✅ Payment successful!")
-            // ✅ UPDATE LOCAL STATE
             setOrderDetails(prev => ({
               ...prev,
               paymentStatus: "Paid"
@@ -116,7 +113,6 @@ const Payment = () => {
     }
   }
 
-  // ✅ FAKE PAYMENT
   const processFakePayment = async () => {
     if (!window.confirm("⚠️ This is a FAKE payment for testing. Proceed?")) return
     
@@ -125,7 +121,7 @@ const Payment = () => {
     try {
       console.log("🔵 Processing fake payment for order:", orderDetails.orderId)
       
-      const res = await fetch("http://localhost:5000/api/payment/verify-payment", {
+      const res = await fetch(`${API_URL}/payment/verify-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,7 +137,6 @@ const Payment = () => {
       
       if (data.success) {
         alert("✅ Payment successful! (Fake)")
-        // ✅ UPDATE LOCAL STATE
         setOrderDetails(prev => ({
           ...prev,
           paymentStatus: "Paid"
@@ -160,7 +155,6 @@ const Payment = () => {
     }
   }
 
-  // ✅ AGAR PAID HAI TOH PAYMENT OPTION MAT DIKHAO
   if (orderDetails?.paymentStatus === "Paid") {
     return (
       <div style={container}>
@@ -210,8 +204,6 @@ const Payment = () => {
   )
 }
 
-// ================= STYLES =================
-
 const container = {
   display: "flex",
   justifyContent: "center",
@@ -260,7 +252,6 @@ const payBtn = {
   cursor: "pointer"
 }
 
-// ✅ ALREADY PAID STYLES
 const alreadyPaidBox = {
   textAlign: "center" as const,
   padding: "20px 0"

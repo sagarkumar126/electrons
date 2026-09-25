@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate, useSearchParams } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const CategoryPage = () => {
   const { category } = useParams()
@@ -33,7 +34,7 @@ const CategoryPage = () => {
     try {
       setLoading(true)
 
-      const productsRes = await fetch(`http://localhost:5000/api/products`)
+      const productsRes = await fetch(`${API_URL}/products`)
       const allProducts = await productsRes.json()
       const filteredProducts = allProducts.filter((p: any) => p.category === decodedCategory)
       setProducts(filteredProducts)
@@ -48,7 +49,7 @@ const CategoryPage = () => {
   // ✅ FIXED: fetch sub-categories from API
   const fetchSubCategories = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/categories/all`)
+      const res = await fetch(`${API_URL}/categories/all`)
       const data = await res.json()
       const allCats = data.data || []
       const found = allCats.find((c: any) => c.name === decodedCategory)

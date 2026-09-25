@@ -4,9 +4,10 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { io } from "socket.io-client"
+import { API_URL, SOCKET_URL } from "../../config"
 
 // ✅ Socket for live quote updates
-const socket = io("http://localhost:5000")
+const socket = io(SOCKET_URL)
 
 const MyRequirements = () => {
   const [requirements, setRequirements] = useState<any[]>([])
@@ -59,7 +60,7 @@ const MyRequirements = () => {
 
   const fetchRequirements = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/buyer-requirement/buyer/${user._id}`)
+      const res = await fetch(`${API_URL}/buyer-requirement/buyer/${user._id}`)
       const data = await res.json()
       if (data.success) {
         setRequirements(data.data)

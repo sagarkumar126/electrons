@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import FilterSidebar from "../../components/FilterSidebar/FilterSidebar"
+import { API_URL } from "../../config"
 
 const Products = () => {
   const navigate = useNavigate()
@@ -18,7 +19,7 @@ const Products = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/products")
+      const res = await fetch(`${API_URL}/products`)
       const data = await res.json()
       setProducts(data)
       setFilteredProducts(data)

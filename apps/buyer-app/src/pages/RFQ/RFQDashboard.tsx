@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const RFQDashboard = () => {
   const navigate = useNavigate()
@@ -10,11 +11,10 @@ const RFQDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const [, setUnreadTick] = useState(0) // force re-render on unread update
+  const [, setUnreadTick] = useState(0)
 
   const user = JSON.parse(localStorage.getItem("user") || "{}")
 
-  // ✅ Read unread by RFQ ID from localStorage (matches RFQDetail)
   const getUnreadCount = (rfqId: string) => {
     const stored = localStorage.getItem(`unread_rfq_${rfqId}`)
     return stored ? parseInt(stored) : 0
@@ -22,12 +22,11 @@ const RFQDashboard = () => {
 
   const fetchRFQs = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/rfq/buyer/${user._id}`)
+      const res = await fetch(`${API_URL}/rfq/buyer/${user._id}`)
       const data = await res.json()
 
       if (data.success && data.data) {
         setRfqs(data.data)
-        // ✅ Cache RFQs in localStorage so Navbar can map roomId -> rfqId
         localStorage.setItem("buyer_rfqs_cache", JSON.stringify(
           data.data.map((r: any) => ({
             rfqId: r.rfqId,
@@ -54,7 +53,6 @@ const RFQDashboard = () => {
     }
   }, [user._id])
 
-  // ✅ Re-render when unread changes (from Navbar socket listener)
   useEffect(() => {
     const handler = () => setUnreadTick((t) => t + 1)
     window.addEventListener("unread-rfq-updated", handler)
@@ -125,7 +123,6 @@ const RFQDashboard = () => {
 
   return (
     <div style={styles.container}>
-      {/* ✅ HERO HEADER */}
       <div style={styles.heroSection}>
         <div style={styles.heroContent}>
           <div>
@@ -214,7 +211,6 @@ const RFQDashboard = () => {
         </div>
       </div>
 
-      {/* ✅ SEARCH & FILTER BAR */}
       <div style={styles.searchFilterBar}>
         <div style={styles.searchWrapper}>
           <span style={styles.searchIcon}>🔍</span>
@@ -261,7 +257,6 @@ const RFQDashboard = () => {
         </div>
       </div>
 
-      {/* ✅ RFQs LIST */}
       {filteredRFQs.length === 0 ? (
         <div style={styles.emptyState}>
           <div style={styles.emptyIcon}>📩</div>
@@ -298,7 +293,6 @@ const RFQDashboard = () => {
                   e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"
                 }}
               >
-                {/* LEFT: IMAGE */}
                 <div style={styles.imageWrapper}>
                   {rfq.items?.[0]?.productImage ? (
                     <img
@@ -315,7 +309,6 @@ const RFQDashboard = () => {
                   )}
                 </div>
 
-                {/* MIDDLE: DETAILS */}
                 <div style={styles.cardContent}>
                   <div style={styles.cardHeader}>
                     <div style={styles.titleSection}>
@@ -358,7 +351,6 @@ const RFQDashboard = () => {
                     </div>
                   </div>
 
-                  {/* ✅ Unread chat text with box */}
                   {unread > 0 && (
                     <div style={styles.unreadBox}>
                       <span style={styles.unreadIcon}>💬</span>
@@ -396,7 +388,6 @@ const RFQDashboard = () => {
                   )}
                 </div>
 
-                {/* RIGHT: ACTION */}
                 <div style={styles.actionSection}>
                   <div style={styles.actionArrow}>→</div>
                   <p style={styles.actionText}>View Details</p>
@@ -415,8 +406,6 @@ const RFQDashboard = () => {
     </div>
   )
 }
-
-// ================= STYLES =================
 
 const styles: any = {
   container: {

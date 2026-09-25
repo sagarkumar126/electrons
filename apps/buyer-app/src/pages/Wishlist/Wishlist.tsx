@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const Wishlist = () => {
   const [wishlist, setWishlist] = useState<any>({ items: [] })
@@ -17,7 +18,7 @@ const Wishlist = () => {
 
   const fetchWishlist = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/wishlist/${buyer._id}`)
+      const res = await fetch(`${API_URL}/wishlist/${buyer._id}`)
       const data = await res.json()
       setWishlist(data)
     } catch (err) {
@@ -28,13 +29,12 @@ const Wishlist = () => {
   }
 
   const removeFromWishlist = async (productId: string) => {
-    await fetch(`http://localhost:5000/api/wishlist/remove/${buyer._id}/${productId}`, {
+    await fetch(`${API_URL}/wishlist/remove/${buyer._id}/${productId}`, {
       method: "DELETE"
     })
     fetchWishlist()
   }
 
-  // ✅ RFQ Button Handler
   const handleRFQ = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!buyer._id) {

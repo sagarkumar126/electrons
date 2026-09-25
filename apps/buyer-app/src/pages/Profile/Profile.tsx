@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const Profile = () => {
   const [form, setForm] = useState<Record<string, string>>({})
@@ -23,7 +24,7 @@ const Profile = () => {
       setOriginalForm(cachedUser)
 
       try {
-        const res = await fetch(`http://localhost:5000/api/auth/buyer/profile/${cachedUser._id}`)
+        const res = await fetch(`${API_URL}/auth/buyer/profile/${cachedUser._id}`)
         const data: { success?: boolean; data?: Record<string, string> } = await res.json()
 
         if (data.success && data.data) {
@@ -37,7 +38,7 @@ const Profile = () => {
       }
 
       try {
-        const ordersRes = await fetch(`http://localhost:5000/api/orders/buyer/${cachedUser._id}`)
+        const ordersRes = await fetch(`${API_URL}/orders/buyer/${cachedUser._id}`)
         const ordersData: unknown = await ordersRes.json()
         if (Array.isArray(ordersData)) {
           setOrdersCount(ordersData.length)
@@ -68,7 +69,7 @@ const Profile = () => {
     setLoading(true)
     try {
       const res = await fetch(
-        `http://localhost:5000/api/auth/buyer/profile/${form._id}`,
+        `${API_URL}/auth/buyer/profile/${form._id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -384,7 +385,6 @@ const Profile = () => {
 
 // ================= STYLES =================
 
-// ✅ FULL-WIDTH PAGE
 const pageWrapper: React.CSSProperties = {
   minHeight: "100vh",
   background: "linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)",
@@ -396,7 +396,6 @@ const pageWrapper: React.CSSProperties = {
   width: "100%"
 }
 
-// HERO
 const heroSection: React.CSSProperties = {
   background: "linear-gradient(135deg, #1e293b 0%, #4c1d95 100%)",
   padding: "28px 36px",
@@ -504,7 +503,6 @@ const cancelBtnTop: React.CSSProperties = {
   fontSize: "14px"
 }
 
-// STATS — full width
 const statsGrid: React.CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
@@ -550,7 +548,6 @@ const statValue: React.CSSProperties = {
   color: "#0f172a"
 }
 
-// ✅ MAIN GRID — 2 columns, full width
 const mainGrid: React.CSSProperties = {
   display: "grid",
   gridTemplateColumns: "1fr 1fr",

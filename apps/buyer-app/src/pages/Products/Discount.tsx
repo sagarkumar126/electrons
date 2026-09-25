@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const Discount = () => {
   const [products, setProducts] = useState<any[]>([])
   const navigate = useNavigate()
 
   const fetchDiscounted = async () => {
-    const res = await fetch("http://localhost:5000/api/products")
+    const res = await fetch(`${API_URL}/products`)
     const data = await res.json()
 
     const filtered = data.filter(

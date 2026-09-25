@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const CategoryProducts = () => {
   const { name } = useParams()
@@ -7,7 +8,7 @@ const CategoryProducts = () => {
   const [products, setProducts] = useState<any[]>([])
 
   const fetchByCategory = async () => {
-    const res = await fetch("http://localhost:5000/api/products")
+    const res = await fetch(`${API_URL}/products`)
     const data = await res.json()
     setProducts(data)
   }

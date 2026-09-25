@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const SellerStore = () => {
   const { sellerId } = useParams()
@@ -14,12 +15,12 @@ const SellerStore = () => {
   const fetchSellerData = async () => {
     try {
       // Fetch seller profile
-      const sellerRes = await fetch(`http://localhost:5000/api/seller/profile/${sellerId}`)
+      const sellerRes = await fetch(`${API_URL}/seller/profile/${sellerId}`)
       const sellerData = await sellerRes.json()
       setSeller(sellerData)
 
       // Fetch seller products
-      const productsRes = await fetch(`http://localhost:5000/api/products/seller/${sellerId}`)
+      const productsRes = await fetch(`${API_URL}/products/seller/${sellerId}`)
       const productsData = await productsRes.json()
       setProducts(productsData)
     } catch (error) {

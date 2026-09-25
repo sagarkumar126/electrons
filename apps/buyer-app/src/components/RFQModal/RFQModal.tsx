@@ -2,6 +2,7 @@
 // File: buyer-app/src/components/RFQModal/RFQModal.tsx
 
 import { useState } from "react"
+import { API_URL } from "../../config"
 
 interface RFQModalProps {
   isOpen: boolean
@@ -132,7 +133,7 @@ const RFQModal = ({
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/rfq/create", {
+      const res = await fetch(`${API_URL}/rfq/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(rfqData)

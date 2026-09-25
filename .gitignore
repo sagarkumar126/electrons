@@ -3,11 +3,11 @@ node_modules/
 **/node_modules/
 
 # Environment Files (⚠️ NEVER PUSH)
-.env
+# .env
 .env.local
 .env.production
 .env.development
-**/.env
+# **/.env
 **/.env.local
 **/.env.production
 **/.env.development

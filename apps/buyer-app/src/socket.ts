@@ -1,5 +1,6 @@
 import { io } from "socket.io-client"
+import { SOCKET_URL } from "./config"
 
-export const socket = io("http://localhost:5000", {
+export const socket = io(SOCKET_URL, {
   transports: ["websocket"]
 })

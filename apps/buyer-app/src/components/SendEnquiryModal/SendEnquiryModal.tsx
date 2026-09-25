@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { API_URL } from "../../config"
 
 const SendEnquiryModal = ({ product, onClose }: any) => {
   const [form, setForm] = useState({
@@ -57,8 +58,7 @@ const SendEnquiryModal = ({ product, onClose }: any) => {
         status: "Pending",
         createdAt: new Date()
       }
-
-      const res = await fetch("http://localhost:5000/api/enquiries", {
+const res = await fetch(`${API_URL}/enquiries`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(enquiryData)

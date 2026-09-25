@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const OrderTracking = () => {
   const { orderId } = useParams()
@@ -49,7 +50,7 @@ const OrderTracking = () => {
 
   const fetchOrder = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${orderId}`)
+      const res = await fetch(`${API_URL}/orders/${orderId}`)
       const data = await res.json()
       setOrder(data)
     } catch (error) {
@@ -105,7 +106,7 @@ const OrderTracking = () => {
     const fullAddress = `${addressData.addressLine1}, ${addressData.addressLine2 || ""}, ${addressData.city}, ${addressData.state}, ${addressData.pincode}, ${addressData.country}`
 
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/status/${orderId}`, {
+      const res = await fetch(`${API_URL}/orders/status/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,7 +121,7 @@ const OrderTracking = () => {
         setIsEditingAddress(false)
         fetchOrder()
         
-        await fetch(`http://localhost:5000/api/auth/buyer/profile/${user._id}`, {
+        await fetch(`${API_URL}/auth/buyer/profile/${user._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(addressData)
@@ -134,7 +135,6 @@ const OrderTracking = () => {
     }
   }
 
-  // ✅ Calculate advance amount
   const getAdvanceAmount = () => {
     if (order?.advanceAmount) return order.advanceAmount
     if (order?.quoteData?.advanceAmount) return order.quoteData.advanceAmount
@@ -143,7 +143,6 @@ const OrderTracking = () => {
     return total * advancePercent / 100
   }
 
-  // ✅ Calculate remaining amount
   const getRemainingAmount = () => {
     if (order?.remainingAmount) return order.remainingAmount
     if (order?.quoteData?.remainingAmount) return order.quoteData.remainingAmount
@@ -166,7 +165,7 @@ const OrderTracking = () => {
     if (!window.confirm("Are you sure you want to cancel this order?")) return
 
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/cancel/${orderId}`, {
+      const res = await fetch(`${API_URL}/orders/cancel/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: cancelReason })
@@ -237,7 +236,6 @@ const OrderTracking = () => {
           </div>
         </div>
 
-        {/* ✅ PAYMENT BREAKDOWN - SHOW ADVANCE & REMAINING */}
         <div style={paymentBreakdownBox}>
           <h4 style={paymentBreakdownTitle}>💰 Payment Breakdown</h4>
           <div style={paymentBreakdownGrid}>
@@ -272,7 +270,6 @@ const OrderTracking = () => {
           </div>
         </div>
 
-        {/* ✅ QUOTE DATA SECTION */}
         {(order.quoteData || order.originalTotal) && (
           <div style={quoteDataBox}>
             <h3 style={quoteDataTitle}>📋 Quote Details</h3>
@@ -321,7 +318,7 @@ const OrderTracking = () => {
                 <div style={quoteDataItem}>
                   <span style={quoteDataLabel}>📝 Message</span>
                   <span style={{ ...quoteDataValue, fontStyle: "italic" }}>
-                    “{order.quoteData?.quoteMessage || order.quoteMessage}”
+                    "{order.quoteData?.quoteMessage || order.quoteMessage}"
                   </span>
                 </div>
               )}
@@ -336,7 +333,6 @@ const OrderTracking = () => {
           </div>
         )}
 
-        {/* STEP 1: ADDRESS */}
         <div style={stepBox}>
           <div style={stepHeader}>
             <span style={stepNumber}>1</span>
@@ -567,7 +563,6 @@ const OrderTracking = () => {
           )}
         </div>
 
-        {/* STEP 2: PAYMENT */}
         <div style={stepBox}>
           <div style={stepHeader}>
             <span style={stepNumber}>2</span>
@@ -592,7 +587,6 @@ const OrderTracking = () => {
           )}
         </div>
 
-        {/* STEP 3: ORDER COMPLETE */}
         <div style={stepBox}>
           <div style={stepHeader}>
             <span style={stepNumber}>3</span>
@@ -670,7 +664,7 @@ const OrderTracking = () => {
         </div>
 
         <button
-          onClick={() => window.open(`http://localhost:5000/api/invoice/${order.orderId}`, '_blank')}
+          onClick={() => window.open(`${API_URL}/invoice/${order.orderId}`, '_blank')}
           style={invoiceBtn}
         >
           📄 Download Invoice
@@ -686,8 +680,6 @@ const OrderTracking = () => {
     </div>
   )
 }
-
-// ================= STYLES =================
 
 const container = {
   padding: 20,
@@ -746,7 +738,6 @@ const detailsGrid = {
   marginBottom: 20
 }
 
-// ✅ PAYMENT BREAKDOWN STYLES
 const paymentBreakdownBox = {
   background: "linear-gradient(135deg, #f0f9ff, #e0f2fe)",
   padding: "16px 20px",

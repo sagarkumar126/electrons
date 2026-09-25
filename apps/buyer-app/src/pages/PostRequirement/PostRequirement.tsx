@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const PostRequirement = () => {
   const navigate = useNavigate()
@@ -11,7 +12,7 @@ const PostRequirement = () => {
     quantity: "",
     unit: "Units",
     phone: "",
-    email: "", // ✅ Email field add karo
+    email: "",
     additionalNotes: ""
   })
 
@@ -21,7 +22,6 @@ const PostRequirement = () => {
 
   const units = ["Units", "KGs", "Boxes", "Cartons", "Sets", "Pieces", "Pairs"]
 
-  // ✅ Load user data on mount
   useEffect(() => {
     if (user._id) {
       setFormData(prev => ({
@@ -83,7 +83,7 @@ const PostRequirement = () => {
 
       console.log("📦 Payload:", payload)
 
-      const res = await fetch("http://localhost:5000/api/buyer-requirement/post", {
+      const res = await fetch(`${API_URL}/buyer-requirement/post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -131,7 +131,6 @@ const PostRequirement = () => {
         <p style={styles.subtitle}>Tell us what you need, get quotes from sellers.</p>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          {/* Product Name */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Product/Service Name *</label>
             <input
@@ -145,7 +144,6 @@ const PostRequirement = () => {
             />
           </div>
 
-          {/* Description */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Product Description *</label>
             <textarea
@@ -159,7 +157,6 @@ const PostRequirement = () => {
             />
           </div>
 
-          {/* Quantity & Unit */}
           <div style={styles.row}>
             <div style={styles.halfField}>
               <label style={styles.label}>Quantity *</label>
@@ -189,7 +186,6 @@ const PostRequirement = () => {
             </div>
           </div>
 
-          {/* ✅ Email Field - Auto-filled */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Email *</label>
             <input
@@ -206,7 +202,6 @@ const PostRequirement = () => {
             </small>
           </div>
 
-          {/* Phone Number */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Phone Number *</label>
             <input
@@ -223,7 +218,6 @@ const PostRequirement = () => {
             </small>
           </div>
 
-          {/* Additional Notes */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>
               Additional Notes <span style={styles.optional}>(Optional)</span>
@@ -238,14 +232,12 @@ const PostRequirement = () => {
             />
           </div>
 
-          {/* Error Message */}
           {error && (
             <div style={styles.errorBox}>
               <span style={styles.errorText}>❌ {error}</span>
             </div>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             style={styles.submitBtn}
@@ -262,8 +254,6 @@ const PostRequirement = () => {
     </div>
   )
 }
-
-// ================= STYLES =================
 
 const styles: any = {
   container: {

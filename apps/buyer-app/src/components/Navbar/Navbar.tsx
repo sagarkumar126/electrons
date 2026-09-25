@@ -4,8 +4,9 @@ import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { io } from "socket.io-client"
 import NotificationBell from "../NotificationBell/NotificationBell"  // ✅ NEW
+import { API_URL, SOCKET_URL } from "../../config"
 
-const socket = io("http://localhost:5000")
+const socket = io(SOCKET_URL)
 
 const Navbar = () => {
   const [user, setUser] = useState<any>(null)
@@ -89,11 +90,11 @@ const Navbar = () => {
 
   const fetchCounts = async (buyerId: string) => {
     try {
-      const cartRes = await fetch(`http://localhost:5000/api/cart/${buyerId}`)
+      const cartRes = await fetch(`${API_URL}/cart/${buyerId}`)
       const cartData = await cartRes.json()
       setCartCount(cartData.totalItems || 0)
 
-      const wishlistRes = await fetch(`http://localhost:5000/api/wishlist/${buyerId}`)
+      const wishlistRes = await fetch(`${API_URL}/wishlist/${buyerId}`)
       const wishlistData = await wishlistRes.json()
       setWishlistCount(wishlistData.items?.length || 0)
     } catch (err) {
@@ -108,6 +109,20 @@ const Navbar = () => {
     window.location.href = "/login"
   }
 
+  // ✅ Scroll helper — if not on home page, go home first
+  const scrollToSection = (sectionId: string) => {
+    if (location.pathname !== "/") {
+      navigate("/")
+      setTimeout(() => {
+        const el = document.getElementById(sectionId)
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 300)
+    } else {
+      const el = document.getElementById(sectionId)
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }
+
   const hideCategoryPages = ["/profile", "/blog", "/contact", "/help", "/faq", "/cart", "/wishlist", "/orders", "/my-enquiries", "/chats", "/rfq-dashboard", "/post-requirement", "/my-requirements"]
   const hideCategories = hideCategoryPages.includes(location.pathname)
 
@@ -118,7 +133,6 @@ const Navbar = () => {
   // ============================================================
   if (!user) {
     return (
-      // ✅ OUTER WRAPPER — sticky (position: relative is not applied here)
       <div
         style={{
           position: "sticky",
@@ -127,7 +141,6 @@ const Navbar = () => {
           width: "100%"
         }}
       >
-        {/* ✅ INNER CONTAINER — with relative for glow orbs */}
         <div
           style={{
             background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4c1d95 100%)",
@@ -142,7 +155,6 @@ const Navbar = () => {
             overflow: "hidden"
           }}
         >
-          {/* Glow orbs */}
           <div
             style={{
               position: "absolute",
@@ -168,7 +180,6 @@ const Navbar = () => {
             }}
           />
 
-          {/* Logo */}
           <div
             onClick={() => navigate("/")}
             style={{
@@ -204,7 +215,6 @@ const Navbar = () => {
             </h2>
           </div>
 
-          {/* Login + Register Buttons */}
           <div
             style={{
               display: "flex",
@@ -288,7 +298,7 @@ const Navbar = () => {
   }
 
   // ============================================================
-  // ✅ LOGGED-IN NAVBAR — sticky removed (MainLayout wrapper handles it)
+  // ✅ LOGGED-IN NAVBAR
   // ============================================================
   return (
     <div
@@ -367,7 +377,6 @@ const Navbar = () => {
         </div>
 
         <div style={{ display: "flex", gap: "18px", alignItems: "center" }}>
-          {/* ✅ NOTIFICATION BELL — Added here */}
           <NotificationBell />
 
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -434,28 +443,32 @@ const Navbar = () => {
           🏠 Home
         </Link>
 
+        {/* ✅ CHANGED: Blog, Help, FAQ, Contact — now scroll instead of navigate */}
         <div style={{ display: "flex", gap: "20px" }}>
-          {["/blog", "/help", "/faq", "/contact"].map((path) => {
-            const names: { [key: string]: string } = {
-              "/blog": "📝 Blog",
-              "/help": "❓ Help",
-              "/faq": "💡 FAQ",
-              "/contact": "📞 Contact"
-            }
-            return (
-              <Link
-                key={path}
-                to={path}
-                style={{
-                  ...navLink,
-                  color: isActive(path) ? "#38bdf8" : "#cbd5e1",
-                  fontWeight: isActive(path) ? "600" : "400"
-                }}
-              >
-                {names[path]}
-              </Link>
-            )
-          })}
+          <button
+            onClick={() => scrollToSection("blog")}
+            style={{ ...navLinkButton }}
+          >
+            📝 Blog
+          </button>
+          <button
+            onClick={() => scrollToSection("help")}
+            style={{ ...navLinkButton }}
+          >
+            ❓ Help
+          </button>
+          <button
+            onClick={() => scrollToSection("faq")}
+            style={{ ...navLinkButton }}
+          >
+            💡 FAQ
+          </button>
+          <button
+            onClick={() => scrollToSection("contact")}
+            style={{ ...navLinkButton }}
+          >
+            📞 Contact
+          </button>
         </div>
 
         <div style={{ display: "flex", gap: "18px", alignItems: "center", flexWrap: "wrap" }}>
@@ -531,6 +544,21 @@ const navLink = {
   transition: "all 0.3s ease",
   padding: "6px 12px",
   borderRadius: "8px"
+}
+
+// ✅ NEW: Button-style nav link (for scroll buttons)
+const navLinkButton = {
+  color: "#cbd5e1",
+  textDecoration: "none",
+  fontSize: "14px",
+  fontWeight: "400",
+  transition: "all 0.3s ease",
+  padding: "6px 12px",
+  borderRadius: "8px",
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "inherit"
 }
 
 const badge = {

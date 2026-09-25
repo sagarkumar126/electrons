@@ -3,8 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom"
 import Navbar from "../components/Navbar/Navbar"
 import CategoriesBar from "../components/CategoriesBar/CategoriesBar"
 import { io } from "socket.io-client"
+import { SOCKET_URL } from "../config"
 
-const socket = io("http://localhost:5000")
+const socket = io(SOCKET_URL)
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation()

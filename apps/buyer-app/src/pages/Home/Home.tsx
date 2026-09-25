@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { categories, subCategories, categoryIcons } from "../../constants/categories"
 import RFQModal from "../../components/RFQModal/RFQModal"
+import { API_URL } from "../../config"
 
 const CATEGORIES_PER_PAGE = 7
 
@@ -19,6 +20,9 @@ const Home = () => {
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
 
+  // ✅ FAQ accordion state — pehla khula
+  const [openFaq, setOpenFaq] = useState<number | null>(0)
+
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3000)
@@ -30,7 +34,7 @@ const Home = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/products")
+      const res = await fetch(`${API_URL}/products`)
       const data = await res.json()
       setProducts(data)
     } catch (error) {
@@ -84,24 +88,41 @@ const Home = () => {
   const trendingCategories = ["Smart Watches", "True Wireless Earphones", "Gaming Laptops", "OLED TVs"]
   const currentProduct = products[currentSlide]
 
-  // ✅ Categories that have products
   const categoriesWithProducts = categories.filter((category) =>
     products.some((p) => p.category === category)
   )
 
-  // ✅ Pagination math
   const totalCategoryPages = Math.ceil(categoriesWithProducts.length / CATEGORIES_PER_PAGE)
   const startIdx = (categoryPage - 1) * CATEGORIES_PER_PAGE
   const endIdx = startIdx + CATEGORIES_PER_PAGE
   const visibleCategories = categoriesWithProducts.slice(startIdx, endIdx)
 
+  const faqs = [
+    {
+      q: "What is Electrons B2B Marketplace?",
+      a: "Electrons is a B2B marketplace connecting electronics buyers with verified sellers across India. Buy in bulk, get quotes, and negotiate prices directly with sellers."
+    },
+    {
+      q: "How do I verify a seller?",
+      a: "Look for the ✅ GST Verified badge and ⭐ Trusted Seller tag on seller profiles. All sellers go through KYC verification before listing products."
+    },
+    {
+      q: "What payment methods are accepted?",
+      a: "We accept UPI, Credit/Debit Cards, Net Banking, and Razorpay. Advance payment (40%) is required to confirm orders."
+    },
+    {
+      q: "Can I cancel my order?",
+      a: "Yes, orders can be cancelled before payment confirmation. After that, contact our support team for assistance."
+    },
+    {
+      q: "How long does delivery take?",
+      a: "Delivery timelines vary by seller and location. Check the product page for estimated delivery times or chat with the seller directly."
+    }
+  ]
+
   return (
     <div style={container}>
 
-      {/* ============================================================ */}
-      {/* ✅ SIRF PAGE 1 PE: Slider, Post Requirement, Best Sellers,  */}
-      {/*    New Arrivals, Trending                                    */}
-      {/* ============================================================ */}
       {categoryPage === 1 && (
         <>
           {/* SLIDER */}
@@ -239,9 +260,7 @@ const Home = () => {
         </>
       )}
 
-      {/* ============================================================ */}
-      {/* ✅ SABHI PAGES PE: Categories (7 per page, 13 products each) */}
-      {/* ============================================================ */}
+      {/* CATEGORIES */}
       {visibleCategories.map((category) => {
         const categoryProducts = products.filter((p) => p.category === category)
         if (categoryProducts.length === 0) return null
@@ -293,9 +312,7 @@ const Home = () => {
         )
       })}
 
-      {/* ============================================================ */}
-      {/* ✅ PAGINATION — NO SCROLL                                    */}
-      {/* ============================================================ */}
+      {/* PAGINATION */}
       {totalCategoryPages > 1 && (
         <div style={paginationWrapper}>
           <button
@@ -343,6 +360,161 @@ const Home = () => {
           </button>
         </div>
       )}
+
+      {/* BLOG SECTION */}
+      <div id="blog" style={contentSection}>
+        <div style={contentHeader}>
+          <span style={contentIcon}>📝</span>
+          <h2 style={contentTitle}>Latest from Our Blog</h2>
+        </div>
+
+        <div style={blogGrid}>
+          <div style={blogCard}>
+            <div style={blogEmoji}>💻</div>
+            <h3 style={blogCardTitle}>How to Choose the Right Laptop for Your Business</h3>
+            <p style={blogDate}>📅 15 Jan 2026</p>
+            <p style={blogExcerpt}>
+              Buying laptops in bulk? Here are 7 things to check before placing your order...
+            </p>
+            <button
+              style={blogReadBtn}
+              onClick={() => alert("📖 Full blog post coming soon!")}
+            >
+              Read More →
+            </button>
+          </div>
+
+          <div style={blogCard}>
+            <div style={blogEmoji}>📈</div>
+            <h3 style={blogCardTitle}>B2B Electronics: 5 Trends to Watch in 2026</h3>
+            <p style={blogDate}>📅 10 Jan 2026</p>
+            <p style={blogExcerpt}>
+              From AI-powered gadgets to eco-friendly devices, here's what's shaping the industry...
+            </p>
+            <button
+              style={blogReadBtn}
+              onClick={() => alert("📖 Full blog post coming soon!")}
+            >
+              Read More →
+            </button>
+          </div>
+
+          <div style={blogCard}>
+            <div style={blogEmoji}>🧾</div>
+            <h3 style={blogCardTitle}>GST Guide for Bulk Electronics Buyers</h3>
+            <p style={blogDate}>📅 5 Jan 2026</p>
+            <p style={blogExcerpt}>
+              Save money with Input Tax Credit. Here's everything you need to know...
+            </p>
+            <button
+              style={blogReadBtn}
+              onClick={() => alert("📖 Full blog post coming soon!")}
+            >
+              Read More →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* HELP SECTION */}
+      <div id="help" style={contentSection}>
+        <div style={contentHeader}>
+          <span style={contentIcon}>❓</span>
+          <h2 style={contentTitle}>How Can We Help You?</h2>
+        </div>
+
+        <div style={helpGrid}>
+          <div style={helpCard}>
+            <div style={helpIcon}>🛒</div>
+            <h3 style={helpCardTitle}>How to Place an Order</h3>
+            <p style={helpCardText}>
+              Browse products, add to cart, and checkout in 3 easy steps
+            </p>
+          </div>
+
+          <div style={helpCard}>
+            <div style={helpIcon}>💬</div>
+            <h3 style={helpCardTitle}>Chat with Sellers</h3>
+            <p style={helpCardText}>
+              Negotiate prices directly with verified sellers
+            </p>
+          </div>
+
+          <div style={helpCard}>
+            <div style={helpIcon}>📩</div>
+            <h3 style={helpCardTitle}>Request a Quote (RFQ)</h3>
+            <p style={helpCardText}>
+              Get custom quotes for bulk orders
+            </p>
+          </div>
+
+          <div style={helpCard}>
+            <div style={helpIcon}>💳</div>
+            <h3 style={helpCardTitle}>Payment & Refunds</h3>
+            <p style={helpCardText}>
+              Secure payments with Razorpay. Easy refund process
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* FAQ SECTION */}
+      <div id="faq" style={contentSection}>
+        <div style={contentHeader}>
+          <span style={contentIcon}>💡</span>
+          <h2 style={contentTitle}>Frequently Asked Questions</h2>
+        </div>
+
+        <div style={faqList}>
+          {faqs.map((faq, idx) => (
+            <div key={idx} style={faqItem}>
+              <div
+                style={faqQuestion}
+                onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+              >
+                <span>{faq.q}</span>
+                <span style={faqArrow}>{openFaq === idx ? "−" : "+"}</span>
+              </div>
+              {openFaq === idx && (
+                <div style={faqAnswer}>
+                  {faq.a}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CONTACT SECTION */}
+      <div id="contact" style={contentSection}>
+        <div style={contentHeader}>
+          <span style={contentIcon}>📞</span>
+          <h2 style={contentTitle}>Get in Touch</h2>
+        </div>
+
+        <div style={contactGrid}>
+          <div style={contactCard}>
+            <div style={contactIcon}>📧</div>
+            <h3 style={contactCardTitle}>Email Us</h3>
+            <p style={contactCardText}>support@electrons.com</p>
+            <p style={contactCardSub}>We reply within 24 hours</p>
+          </div>
+
+          <div style={contactCard}>
+            <div style={contactIcon}>📞</div>
+            <h3 style={contactCardTitle}>Call Us</h3>
+            <p style={contactCardText}>+91 98765 43210</p>
+            <p style={contactCardSub}>Mon-Sat, 9 AM to 6 PM</p>
+          </div>
+
+          <div style={contactCard}>
+            <div style={contactIcon}>📍</div>
+            <h3 style={contactCardTitle}>Visit Us</h3>
+            <p style={contactCardText}>Mumbai, Maharashtra, India</p>
+            <p style={contactCardSub}>Head Office</p>
+          </div>
+        </div>
+      </div>
 
       {/* RFQ MODAL */}
       {showRFQModal && selectedProduct && (
@@ -403,7 +575,7 @@ const ProductCardWithRFQ = ({ product, navigate, onRFQClick, showToast }: any) =
     }
 
     try {
-      await fetch("http://localhost:5000/api/wishlist/add", {
+      await fetch(`${API_URL}/wishlist/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -476,7 +648,7 @@ const ProductCardOnlyWishlist = ({ product, navigate, showToast }: any) => {
     }
 
     try {
-      await fetch("http://localhost:5000/api/wishlist/add", {
+      await fetch(`${API_URL}/wishlist/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -985,6 +1157,219 @@ const paginationNumBtn = {
   alignItems: "center",
   justifyContent: "center",
   transition: "all 0.2s ease"
+}
+
+// ================= NEW: BLOG / HELP / FAQ / CONTACT STYLES =================
+
+const contentSection = {
+  background: "#ffffff",
+  padding: "32px 36px",
+  borderRadius: "16px",
+  border: "2px solid #cbd5e1",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+  marginBottom: "32px",
+  scrollMarginTop: "100px"
+}
+
+const contentHeader = {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "24px",
+  paddingBottom: "16px",
+  borderBottom: "2px solid #e2e8f0"
+}
+
+const contentIcon = {
+  fontSize: "28px"
+}
+
+const contentTitle = {
+  fontSize: "26px",
+  fontWeight: "800",
+  color: "#0f172a",
+  margin: 0,
+  letterSpacing: "-0.4px"
+}
+
+// BLOG
+const blogGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+  gap: "20px"
+}
+
+const blogCard = {
+  background: "linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)",
+  padding: "22px",
+  borderRadius: "14px",
+  border: "2px solid #e2e8f0",
+  transition: "all 0.3s ease",
+  display: "flex",
+  flexDirection: "column" as const,
+  gap: "8px"
+}
+
+const blogEmoji = {
+  fontSize: "32px",
+  marginBottom: "6px"
+}
+
+const blogCardTitle = {
+  fontSize: "16px",
+  fontWeight: "700",
+  color: "#0f172a",
+  margin: 0,
+  lineHeight: "1.4"
+}
+
+const blogDate = {
+  fontSize: "12px",
+  color: "#94a3b8",
+  margin: 0,
+  fontWeight: "500"
+}
+
+const blogExcerpt = {
+  fontSize: "13px",
+  color: "#475569",
+  margin: "4px 0 0 0",
+  lineHeight: "1.6"
+}
+
+const blogReadBtn = {
+  marginTop: "12px",
+  padding: "8px 16px",
+  background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+  color: "white",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+  fontSize: "13px",
+  alignSelf: "flex-start" as const,
+  boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)",
+  transition: "all 0.3s ease"
+}
+
+// HELP
+const helpGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+  gap: "20px"
+}
+
+const helpCard = {
+  background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+  padding: "24px",
+  borderRadius: "14px",
+  border: "2px solid #bae6fd",
+  transition: "all 0.3s ease",
+  textAlign: "center" as const
+}
+
+const helpIcon = {
+  fontSize: "36px",
+  marginBottom: "12px"
+}
+
+const helpCardTitle = {
+  fontSize: "16px",
+  fontWeight: "700",
+  color: "#0f172a",
+  margin: "0 0 8px 0"
+}
+
+const helpCardText = {
+  fontSize: "13px",
+  color: "#475569",
+  margin: 0,
+  lineHeight: "1.6"
+}
+
+// FAQ
+const faqList = {
+  display: "flex",
+  flexDirection: "column" as const,
+  gap: "12px"
+}
+
+const faqItem = {
+  background: "linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)",
+  borderRadius: "12px",
+  border: "2px solid #fde68a",
+  overflow: "hidden" as const,
+  transition: "all 0.3s ease"
+}
+
+const faqQuestion = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: "18px 22px",
+  cursor: "pointer",
+  fontWeight: "700",
+  fontSize: "15px",
+  color: "#0f172a",
+  gap: "16px"
+}
+
+const faqArrow = {
+  fontSize: "22px",
+  color: "#d97706",
+  fontWeight: "800",
+  flexShrink: 0
+}
+
+const faqAnswer = {
+  padding: "0 22px 18px 22px",
+  fontSize: "14px",
+  color: "#475569",
+  lineHeight: "1.7",
+  borderTop: "1px solid #fde68a",
+  paddingTop: "14px",
+  marginTop: "4px"
+}
+
+// CONTACT
+const contactGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+  gap: "20px"
+}
+
+const contactCard = {
+  background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
+  padding: "28px 22px",
+  borderRadius: "14px",
+  border: "2px solid #ddd6fe",
+  transition: "all 0.3s ease",
+  textAlign: "center" as const
+}
+
+const contactIcon = {
+  fontSize: "40px",
+  marginBottom: "12px"
+}
+
+const contactCardTitle = {
+  fontSize: "17px",
+  fontWeight: "700",
+  color: "#0f172a",
+  margin: "0 0 10px 0"
+}
+
+const contactCardText = {
+  fontSize: "14px",
+  color: "#1e293b",
+  fontWeight: "600",
+  margin: "0 0 4px 0"
+}
+
+const contactCardSub = {
+  fontSize: "12px",
+  color: "#64748b",
+  margin: 0
 }
 
 const loadingStyle = {

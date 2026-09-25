@@ -19,6 +19,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   cart: cartReducer,
   wishlist: wishlistReducer,
+  
   orders: ordersReducer,
   products: productsReducer,
   seller: sellerReducer

@@ -1,5 +1,6 @@
 import { signInWithPopup } from "firebase/auth"
 import { auth, googleProvider } from "../../firebase"
+import { API_URL } from "../../config"
 
 const Register = () => {
   const handleGoogleRegister = async () => {
@@ -7,7 +8,7 @@ const Register = () => {
       const result = await signInWithPopup(auth, googleProvider)
       const user = result.user
 
-      const res = await fetch("http://localhost:5000/api/auth/google", {
+      const res = await fetch(`${API_URL}/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

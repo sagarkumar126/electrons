@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const Orders = () => {
   const navigate = useNavigate()
@@ -30,7 +31,7 @@ const Orders = () => {
       setLoading(true)
       setError("")
       
-      const res = await fetch(`http://localhost:5000/api/orders/buyer/${user._id}`)
+      const res = await fetch(`${API_URL}/orders/buyer/${user._id}`)
       
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`)
@@ -349,11 +350,7 @@ const styles: any = {
     border: "1px solid #e2e8f0",
     boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
     overflow: "hidden",
-    transition: "all 0.2s",
-    ":hover": {
-      boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
-      transform: "translateY(-2px)"
-    }
+    transition: "all 0.2s"
   },
 
   cardHeader: {
@@ -474,11 +471,7 @@ const styles: any = {
     fontWeight: "600",
     fontSize: "13px",
     transition: "all 0.2s",
-    boxShadow: "0 2px 8px rgba(34, 197, 94, 0.2)",
-    ":hover": {
-      transform: "scale(1.02)",
-      boxShadow: "0 4px 15px rgba(34, 197, 94, 0.3)"
-    }
+    boxShadow: "0 2px 8px rgba(34, 197, 94, 0.2)"
   },
   viewBtn: {
     padding: "8px 18px",
@@ -489,10 +482,7 @@ const styles: any = {
     cursor: "pointer",
     fontWeight: "500",
     fontSize: "13px",
-    transition: "all 0.2s",
-    ":hover": {
-      background: "#e2e8f0"
-    }
+    transition: "all 0.2s"
   },
 
   loading: {
@@ -542,12 +532,7 @@ const styles: any = {
     cursor: "pointer",
     fontWeight: "bold",
     fontSize: "14px",
-    boxShadow: "0 4px 15px rgba(37, 99, 235, 0.3)",
-    transition: "all 0.2s",
-    ":hover": {
-      transform: "translateY(-2px)",
-      boxShadow: "0 8px 25px rgba(37, 99, 235, 0.4)"
-    }
+    boxShadow: "0 4px 15px rgba(37, 99, 235, 0.3)"
   }
 }
 

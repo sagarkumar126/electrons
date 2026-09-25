@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import RFQModal from "../../components/RFQModal/RFQModal"
+import { API_URL, BACKEND_URL } from "../../config"
 
 const ProductDetail = () => {
   const { id } = useParams()
@@ -25,14 +26,14 @@ const ProductDetail = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const res = await fetch(`http://localhost:5000/api/products/${id}`)
+      const res = await fetch(`${API_URL}/products/${id}`)
       const data = await res.json()
 
       const updatedProduct = {
         ...data,
         image: data.image?.startsWith("http")
           ? data.image
-          : `http://localhost:5000${data.image || ""}`,
+          : `${BACKEND_URL}${data.image || ""}`,
         extraImages: (
           Array.isArray(data.extraImages)
             ? data.extraImages
@@ -40,7 +41,7 @@ const ProductDetail = () => {
               ? data.images
               : []
         ).map((img: string) =>
-          img.startsWith("http") ? img : `http://localhost:5000${img}`
+          img.startsWith("http") ? img : `${BACKEND_URL}${img}`
         )
       }
 
@@ -48,7 +49,7 @@ const ProductDetail = () => {
 
       if (updatedProduct.sellerId) {
         const res = await fetch(
-          `http://localhost:5000/api/seller/profile/${updatedProduct.sellerId}`
+          `${API_URL}/seller/profile/${updatedProduct.sellerId}`
         )
         const seller = await res.json()
         setCompanyProfile(seller)
@@ -60,12 +61,12 @@ const ProductDetail = () => {
 
   useEffect(() => {
     const fetchRelated = async () => {
-      const res = await fetch(`http://localhost:5000/api/products`)
+      const res = await fetch(`${API_URL}/products`)
       const data = await res.json()
 
       const filtered = data
         .filter((p: any) => p._id !== id && p.category === product?.category)
-        .slice(0, 20)   // ✅ 20 tak hi dikhega
+        .slice(0, 20)
 
       setRelatedProducts(filtered)
     }
@@ -85,7 +86,7 @@ const ProductDetail = () => {
     }
 
     try {
-      await fetch("http://localhost:5000/api/wishlist/add", {
+      await fetch(`${API_URL}/wishlist/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -114,7 +115,6 @@ const ProductDetail = () => {
     <div style={pageStyle}>
       <div style={containerStyle}>
 
-        {/* ============ LEFT SIDE ============ */}
         <div style={leftSide}>
           <div style={imageBox}>
             {product.moq > 0 && (
@@ -156,7 +156,6 @@ const ProductDetail = () => {
             ))}
           </div>
 
-          {/* ✅ SIMILAR PRODUCTS — left side below photos */}
           <div style={sidebar}>
             <h3 style={sectionTitle}>🎯 Similar Products</h3>
             {relatedProducts.length === 0 ? (
@@ -189,7 +188,6 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* ============ RIGHT SIDE ============ */}
         <div style={rightContent}>
           <div style={infoBox}>
             <h1 style={title}>{product.name}</h1>
@@ -377,7 +375,6 @@ const ProductDetail = () => {
   )
 }
 
-// ✅ Small helper for distributor info rows
 const InfoRow = ({ icon, label, value }: any) => {
   if (!value) return null
   return (

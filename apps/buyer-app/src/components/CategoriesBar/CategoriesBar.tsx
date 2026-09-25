@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
+import { API_URL } from "../../config"
 
 const VISIBLE_LIMIT = 10  // ✅ Kitni categories navbar mein dikhein
 
@@ -16,7 +17,7 @@ const CategoriesBar = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/categories/all")
+        const res = await fetch(`${API_URL}/categories/all`)
         const data = await res.json()
         const names = (data.data || []).map((c: any) => c.name)
         setCategories(names)

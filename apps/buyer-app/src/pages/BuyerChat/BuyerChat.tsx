@@ -3,8 +3,9 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate, useLocation } from "react-router-dom"
 import { io } from "socket.io-client"
+import { API_URL, SOCKET_URL } from "../../config"
 
-const socket = io("http://localhost:5000")
+const socket = io(SOCKET_URL)
 
 const BuyerChat = () => {
   const { roomId } = useParams()
@@ -160,7 +161,7 @@ const BuyerChat = () => {
       setUnreadFromIndex(-1)
 
       if (currentRoomId) {
-        fetch(`http://localhost:5000/api/chat/read/${currentRoomId}`, {
+        fetch(`${API_URL}/chat/read/${currentRoomId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ readerId: user._id })
@@ -176,7 +177,7 @@ const BuyerChat = () => {
   // ============================================
   const fetchChatHistory = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/${currentRoomId}`)
+      const res = await fetch(`${API_URL}/chat/${currentRoomId}`)
       const data = await res.json()
       console.log("🔵 Chat history:", data)
 

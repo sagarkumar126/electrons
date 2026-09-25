@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { io } from "socket.io-client"
+import { API_URL, SOCKET_URL } from "../../config"
 
-const socket = io("http://localhost:5000")
+const socket = io(SOCKET_URL)
 
 const ChatList = () => {
   const [chats, setChats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [, setUnreadTick] = useState(0) // ✅ force re-render on unread change
+  const [, setUnreadTick] = useState(0)
   const navigate = useNavigate()
   const user = JSON.parse(localStorage.getItem("user") || "{}")
 
@@ -21,20 +22,15 @@ const ChatList = () => {
     }
   }, [user._id])
 
-  // ============================================
-  // ✅ AUTO-REFRESH: refetch chats when seller sends a message
-  // ============================================
   useEffect(() => {
     if (!user._id) return
 
     const onChatNotification = () => {
-      // Seller sent a message → refresh the chat list
       fetchChats()
       setUnreadTick((t) => t + 1)
     }
 
     const onUnreadUpdate = () => {
-      // Unread changed elsewhere (ChatList click, etc.) → re-render
       setUnreadTick((t) => t + 1)
     }
 
@@ -42,7 +38,6 @@ const ChatList = () => {
     socket.on("receive_message", onChatNotification)
     window.addEventListener("unread-rfq-updated", onUnreadUpdate)
 
-    // ✅ Safety net: poll every 8s (in case a socket event is missed)
     const interval = setInterval(fetchChats, 8000)
 
     return () => {
@@ -55,7 +50,7 @@ const ChatList = () => {
 
   const fetchChats = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/inbox/buyer/${user._id}`)
+      const res = await fetch(`${API_URL}/chat/inbox/buyer/${user._id}`)
       const data = await res.json()
       setChats(data || [])
     } catch (error) {
@@ -66,7 +61,6 @@ const ChatList = () => {
     }
   }
 
-  // ✅ Clear unread badge for the RFQ that matches this chat
   const clearUnreadForChat = (chat: any) => {
     try {
       const rfqsStr = localStorage.getItem("buyer_rfqs_cache") || "[]"
@@ -147,8 +141,6 @@ const ChatList = () => {
 
   return (
     <div style={styles.container}>
-
-      {/* HERO */}
       <div style={styles.heroSection}>
         <div style={styles.heroContent}>
           <div style={styles.heroLeft}>
@@ -168,7 +160,6 @@ const ChatList = () => {
         </div>
       </div>
 
-      {/* SEARCH */}
       {chats.length > 0 && (
         <div style={styles.searchWrapper}>
           <span style={styles.searchIcon}>🔍</span>

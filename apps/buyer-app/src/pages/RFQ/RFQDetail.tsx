@@ -3,8 +3,9 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { io } from "socket.io-client"
+import { API_URL, SOCKET_URL } from "../../config"
 
-const socket = io("http://localhost:5000")
+const socket = io(SOCKET_URL)
 
 const RFQDetail = () => {
   const { id } = useParams()
@@ -62,7 +63,6 @@ const RFQDetail = () => {
       if (msg.roomId === roomId) setChatMessages((prev) => [...prev, msg])
     }
 
-    // ✅ Auto-refresh when seller edits/sends quote
     const handleRFQQuoted = (data: any) => {
       console.log("🔔 RFQ quoted/updated:", data)
       if (data.rfqId === id) fetchRFQ()
@@ -85,7 +85,7 @@ const RFQDetail = () => {
 
   const fetchRFQ = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/rfq/${id}`)
+      const res = await fetch(`${API_URL}/rfq/${id}`)
       const data = await res.json()
       if (data.success) setRfq(data.data)
     } catch (error) {
@@ -97,7 +97,7 @@ const RFQDetail = () => {
 
   const fetchChatHistory = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/${roomId}`)
+      const res = await fetch(`${API_URL}/chat/${roomId}`)
       const data = await res.json()
       setChatMessages(data.messages || [])
     } catch (error) {
@@ -105,9 +105,6 @@ const RFQDetail = () => {
     }
   }
 
-  // ============================================
-  // ✅ Accept Quote — Sends FULL breakdown to backend
-  // ============================================
   const acceptQuote = async (rfqId: string) => {
     const q = rfq?.quote || {}
     const totalQty =
@@ -137,11 +134,10 @@ const RFQDetail = () => {
     if (!window.confirm(confirmMsg)) return
 
     try {
-      const res = await fetch(`http://localhost:5000/api/rfq/accept/${rfqId}`, {
+      const res = await fetch(`${API_URL}/rfq/accept/${rfqId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          // ✅ Full breakdown
           originalPricePerUnit: originalUnit,
           originalTotal,
           bulkPricePerUnit: bulkUnit,
@@ -174,7 +170,7 @@ const RFQDetail = () => {
   const rejectQuote = async (rfqId: string) => {
     if (!window.confirm("Reject this quote?")) return
     try {
-      const res = await fetch(`http://localhost:5000/api/rfq/reject/${rfqId}`, {
+      const res = await fetch(`${API_URL}/rfq/reject/${rfqId}`, {
         method: "PUT"
       })
       const data = await res.json()
@@ -257,9 +253,6 @@ const RFQDetail = () => {
 
   if (!rfq) return <div style={loadingStyle}>RFQ not found</div>
 
-  // ============================================
-  // Compute full quote breakdown
-  // ============================================
   const hasQuote = rfq.quote && (
     rfq.quote.totalQuote ||
     rfq.quote.bulkGstAmount ||
@@ -299,7 +292,6 @@ const RFQDetail = () => {
 
   return (
     <div style={pageWrapper}>
-      {/* HERO */}
       <div style={heroSection}>
         <div style={heroLeft}>
           <button onClick={() => navigate(-1)} style={backBtn}>←</button>
@@ -346,7 +338,6 @@ const RFQDetail = () => {
       </div>
 
       <div style={twoColLayout}>
-        {/* LEFT */}
         <div style={leftColumn}>
           <div style={card}>
             <div style={cardHeader}>
@@ -424,9 +415,7 @@ const RFQDetail = () => {
           </div>
         </div>
 
-        {/* RIGHT */}
         <div style={rightColumn}>
-          {/* ✅ FULL QUOTE CARD */}
           {hasQuote && (
             <div style={{
               ...quoteCard,
@@ -445,7 +434,6 @@ const RFQDetail = () => {
               </div>
 
               <div style={quoteDetailsCompact}>
-                {/* Original Pricing */}
                 <div style={quoteGroupLabel}>🏷️ Original Pricing</div>
                 <div style={quoteDetailRow}>
                   <span style={quoteDetailLabel}>Price / Unit (Original)</span>
@@ -456,7 +444,6 @@ const RFQDetail = () => {
                   <span style={quoteDetailValue}>₹{originalTotal.toFixed(2)}</span>
                 </div>
 
-                {/* Bulk Pricing */}
                 <div style={quoteGroupLabel}>📦 Bulk Pricing</div>
                 <div style={quoteDetailRow}>
                   <span style={quoteDetailLabel}>Bulk Price / Unit</span>
@@ -475,7 +462,6 @@ const RFQDetail = () => {
                   </span>
                 </div>
 
-                {/* Final */}
                 <div style={quoteGroupLabel}>💵 Final</div>
                 <div style={quoteDetailRow}>
                   <span style={quoteDetailLabel}>Total Quantity</span>
@@ -510,7 +496,6 @@ const RFQDetail = () => {
                   </span>
                 </div>
 
-                {/* Delivery & Notes */}
                 <div style={quoteGroupLabel}>📅 Delivery & 📝 Notes</div>
                 <div style={quoteDetailRow}>
                   <span style={quoteDetailLabel}>Delivery Date</span>
@@ -556,7 +541,6 @@ const RFQDetail = () => {
             </div>
           )}
 
-          {/* PENDING */}
           {rfq.status === "Pending" && !hasQuote && (
             <div style={pendingCard}>
               <div style={pendingIconWrapper}>⏳</div>
@@ -573,7 +557,6 @@ const RFQDetail = () => {
             </div>
           )}
 
-          {/* REJECTED */}
           {rfq.status === "Rejected" && (
             <div style={rejectedCard}>
               <div style={rejectedIconWrapper}>❌</div>
@@ -584,7 +567,6 @@ const RFQDetail = () => {
         </div>
       </div>
 
-      {/* CHAT PANEL */}
       {showChat && selectedSeller && (
         <div style={chatPanelContainer}>
           <div style={chatPanel}>

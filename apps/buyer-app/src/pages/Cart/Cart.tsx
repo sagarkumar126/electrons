@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import RFQModal from "../../components/RFQModal/RFQModal"
+import { API_URL } from "../../config"
 
 const Cart = () => {
   const [cart, setCart] = useState<any>({ items: [], totalItems: 0, totalAmount: 0 })
@@ -18,14 +19,14 @@ const Cart = () => {
 
   const fetchCart = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/cart/${buyer._id}`)
+      const res = await fetch(`${API_URL}/cart/${buyer._id}`)
       const data = await res.json()
       setCart(data)
       
       // ✅ Get seller info from first item
       if (data.items && data.items.length > 0) {
         const sellerId = data.items[0].sellerId
-        const sellerRes = await fetch(`http://localhost:5000/api/seller/profile/${sellerId}`)
+        const sellerRes = await fetch(`${API_URL}/seller/profile/${sellerId}`)
         const sellerData = await sellerRes.json()
         setSellerInfo(sellerData)
       }
@@ -38,7 +39,7 @@ const Cart = () => {
 
   const updateQuantity = async (productId: string, quantity: number) => {
     if (quantity < 1) return
-    await fetch("http://localhost:5000/api/cart/update", {
+    await fetch(`${API_URL}/cart/update`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ buyerId: buyer._id, productId, quantity })
@@ -47,7 +48,7 @@ const Cart = () => {
   }
 
   const removeItem = async (productId: string) => {
-    await fetch(`http://localhost:5000/api/cart/remove/${buyer._id}/${productId}`, {
+    await fetch(`${API_URL}/cart/remove/${buyer._id}/${productId}`, {
       method: "DELETE"
     })
     fetchCart()

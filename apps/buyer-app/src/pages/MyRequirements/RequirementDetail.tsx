@@ -4,8 +4,9 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { io } from "socket.io-client"
+import { API_URL, SOCKET_URL } from "../../config"
 
-const socket = io("http://localhost:5000")
+const socket = io(SOCKET_URL)
 
 const RequirementDetail = () => {
   const { requirementId } = useParams()
@@ -31,9 +32,6 @@ const RequirementDetail = () => {
     return stored ? parseInt(stored) : 0
   }
 
-  // ============================================
-  // Fetch requirement + unread listener
-  // ============================================
   useEffect(() => {
     if (requirementId && user._id) fetchRequirement()
 
@@ -42,13 +40,9 @@ const RequirementDetail = () => {
     return () => window.removeEventListener("unread-requirement-updated", onUnread)
   }, [requirementId, user._id])
 
-  // ============================================
-  // ✅ Socket — join buyer room + listen for quote updates
-  // ============================================
   useEffect(() => {
     if (user._id) socket.emit("join_buyer", user._id)
 
-    // ✅ Auto-refresh when seller sends/edits a quote
     const handleQuoteUpdated = (data: any) => {
       console.log("🔔 Quote updated by seller:", data)
       if (data.requirementId === requirementId) {
@@ -67,7 +61,6 @@ const RequirementDetail = () => {
     socket.on("new-quote-on-requirement", handleNewQuote)
     socket.on("new-quote", handleNewQuote)
 
-    // Chat listener
     const handleMessage = (msg: any) => {
       if (msg.roomId === roomId) setChatMessages((prev) => [...prev, msg])
     }
@@ -94,7 +87,7 @@ const RequirementDetail = () => {
 
   const fetchRequirement = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/buyer-requirement/buyer/${user._id}`)
+      const res = await fetch(`${API_URL}/buyer-requirement/buyer/${user._id}`)
       const data = await res.json()
       if (data.success) {
         const found = data.data.find((r: any) => r.requirementId === requirementId)
@@ -109,7 +102,7 @@ const RequirementDetail = () => {
 
   const fetchChatHistory = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/${roomId}`)
+      const res = await fetch(`${API_URL}/chat/${roomId}`)
       const data = await res.json()
       setChatMessages(data.messages || [])
     } catch (error) {
@@ -120,7 +113,7 @@ const RequirementDetail = () => {
   const acceptQuote = async (reqId: string, quote: any) => {
     if (!window.confirm(`Accept quote from ${quote.sellerName} for ₹${quote.price}/unit?`)) return
     try {
-      const res = await fetch(`http://localhost:5000/api/buyer-requirement/accept-quote/${reqId}`, {
+      const res = await fetch(`${API_URL}/buyer-requirement/accept-quote/${reqId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -329,9 +322,6 @@ const RequirementDetail = () => {
             )}
           </div>
 
-          {/* ============================================ */}
-          {/* ✅ QUOTES LIST — FULL BREAKDOWN */}
-          {/* ============================================ */}
           <div style={card}>
             <div style={cardHeader}>
               <span style={cardIcon}>💰</span>
@@ -365,7 +355,6 @@ const RequirementDetail = () => {
 
                   return (
                     <div key={idx} style={quoteItem}>
-                      {/* Header */}
                       <div style={quoteItemHeader}>
                         <div style={quoteItemSeller}>
                           <div style={quoteSellerAvatar}>
@@ -381,7 +370,6 @@ const RequirementDetail = () => {
                         </span>
                       </div>
 
-                      {/* Original Pricing */}
                       <div style={quoteGroupLabel}>🏷️ Original Pricing</div>
                       <div style={quoteDetailRow}>
                         <span style={quoteDetailLabel}>Price / Unit (Original)</span>
@@ -392,7 +380,6 @@ const RequirementDetail = () => {
                         <span style={quoteDetailValue}>₹{originalTotal.toFixed(2)}</span>
                       </div>
 
-                      {/* Bulk Pricing */}
                       <div style={quoteGroupLabel}>📦 Bulk Pricing</div>
                       <div style={quoteDetailRow}>
                         <span style={quoteDetailLabel}>Bulk Price / Unit</span>
@@ -411,7 +398,6 @@ const RequirementDetail = () => {
                         </span>
                       </div>
 
-                      {/* Final */}
                       <div style={quoteGroupLabel}>💵 Final</div>
                       <div style={quoteDetailRow}>
                         <span style={quoteDetailLabel}>Total Quantity</span>
@@ -446,7 +432,6 @@ const RequirementDetail = () => {
                         </span>
                       </div>
 
-                      {/* Delivery & Message */}
                       <div style={quoteGroupLabel}>📅 Delivery & 📝 Notes</div>
                       <div style={quoteDetailRow}>
                         <span style={quoteDetailLabel}>Delivery Date</span>
@@ -461,7 +446,6 @@ const RequirementDetail = () => {
                         </span>
                       </div>
 
-                      {/* Actions */}
                       <div style={quoteActions}>
                         <button
                           style={chatSmallBtn}
