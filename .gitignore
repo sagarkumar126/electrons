@@ -2,15 +2,30 @@
 node_modules/
 **/node_modules/
 
-# Environment Files (⚠️ NEVER PUSH)
-# .env
+# ⚠️ Environment Files
+# Block ALL .env by default (server secrets)
+.env
 .env.local
 .env.production
 .env.development
-# **/.env
+**/.env
 **/.env.local
 **/.env.production
 **/.env.development
+
+# ✅ BUT allow frontend .env files (public URLs only)
+!apps/buyer-app/.env
+!apps/seller-app/.env
+
+# ⚠️ NEVER PUSH server secrets (extra safety)
+apps/main-server/.env
+apps/main-server/.env.local
+apps/main-server/.env.production
+apps/main-server/.env.development
+apps/admin-panel/.env
+apps/admin-panel/.env.local
+apps/admin-panel/.env.production
+apps/admin-panel/.env.development
 
 # Builds
 dist/
@@ -35,7 +50,6 @@ desktop.ini
 # Uploads
 **/uploads/
 uploads/
-
 
 # Screenshots and temp Products folder
 apps/Products__/
