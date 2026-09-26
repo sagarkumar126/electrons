@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { io } from "socket.io-client"
 
-const socket = io("http://localhost:5000")
+const socket = io("https://electrons-1.onrender.com")
 
 const SellerRequirementDetail = () => {
   const { requirementId } = useParams()
@@ -68,7 +68,7 @@ const SellerRequirementDetail = () => {
   const fetchRequirement = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`http://localhost:5000/api/buyer-requirement/seller/${seller._id}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/buyer-requirement/seller/${seller._id}`)
       const data = await res.json()
       const found = data.data?.find((r: any) => r.requirementId === requirementId)
       setReq(found || null)
@@ -245,7 +245,7 @@ const SellerRequirementDetail = () => {
 
     setSending(true)
     try {
-      const res = await fetch("http://localhost:5000/api/buyer-requirement/quote", {
+      const res = await fetch("https://electrons-1.onrender.com/api/buyer-requirement/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -363,7 +363,7 @@ const SellerRequirementDetail = () => {
       const remainingAmt = priceToPay - advanceAmt
 
       const res = await fetch(
-        `http://localhost:5000/api/buyer-requirement/update-quote/${req.requirementId}`,
+        `https://electrons-1.onrender.com/api/buyer-requirement/update-quote/${req.requirementId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -408,7 +408,7 @@ const SellerRequirementDetail = () => {
   // ============================================
   const fetchChatHistory = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/${roomId}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/chat/${roomId}`)
       const data = await res.json()
       setChatMessages(data.messages || [])
     } catch (error) {

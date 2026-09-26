@@ -19,14 +19,14 @@ const SellerProductDetail = () => {
 
   const fetchProduct = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${id}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/products/${id}`)
       const data = await res.json()
 
       const updatedProduct = {
         ...data,
         image: data.image?.startsWith("http")
           ? data.image
-          : `http://localhost:5000${data.image || ""}`,
+          : `https://electrons-1.onrender.com${data.image || ""}`,
         extraImages: (
           Array.isArray(data.extraImages)
             ? data.extraImages
@@ -34,7 +34,7 @@ const SellerProductDetail = () => {
               ? data.images
               : []
         ).map((img: string) =>
-          img.startsWith("http") ? img : `http://localhost:5000${img}`
+          img.startsWith("http") ? img : `https://electrons-1.onrender.com${img}`
         )
       }
 
@@ -43,7 +43,7 @@ const SellerProductDetail = () => {
       // Fetch seller profile for badges
       if (updatedProduct.sellerId) {
         const sellerRes = await fetch(
-          `http://localhost:5000/api/seller/profile/${updatedProduct.sellerId}`
+          `https://electrons-1.onrender.com/api/seller/profile/${updatedProduct.sellerId}`
         )
         const sellerData = await sellerRes.json()
         setCompanyProfile(sellerData)
@@ -63,7 +63,7 @@ const SellerProductDetail = () => {
     if (!confirmDelete) return
 
     try {
-      await fetch(`http://localhost:5000/api/products/${product._id}`, {
+      await fetch(`https://electrons-1.onrender.com/api/products/${product._id}`, {
         method: "DELETE"
       })
       alert("✅ Product deleted!")
@@ -97,7 +97,7 @@ const SellerProductDetail = () => {
     delete updatedProduct._id
 
     try {
-      await fetch(`http://localhost:5000/api/products/${photoEditProduct._id}`, {
+      await fetch(`https://electrons-1.onrender.com/api/products/${photoEditProduct._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedProduct)

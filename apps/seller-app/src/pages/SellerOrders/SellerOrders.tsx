@@ -16,7 +16,7 @@ const SellerOrders = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`http://localhost:5000/api/orders/seller/${user._id}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/orders/seller/${user._id}`)
       const data = await res.json()
       console.log("📦 Orders data:", data)
       setOrders(data)
@@ -37,7 +37,7 @@ const SellerOrders = () => {
     if (!confirm(`Update order status to "${status}"?`)) return
 
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/status/${orderId}`, {
+      const res = await fetch(`https://electrons-1.onrender.com/api/orders/status/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -377,7 +377,7 @@ const SellerOrders = () => {
                     <div style={actionRow}>
                       <button
                         style={invoiceBtn}
-                        onClick={() => window.open(`http://localhost:5000/api/invoice/${order.orderId}`, '_blank')}
+                        onClick={() => window.open(`https://electrons-1.onrender.com/api/invoice/${order.orderId}`, '_blank')}
                       >
                         📄 Download Invoice
                       </button>

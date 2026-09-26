@@ -23,7 +23,7 @@ const SellerAllProducts = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/categories/all")
+        const res = await fetch("https://electrons-1.onrender.com/api/categories/all")
         const data = await res.json()
         setApiCategories(data.data || [])
       } catch (err) {
@@ -37,7 +37,7 @@ const SellerAllProducts = () => {
     try {
       setLoading(true)
       const res = await fetch(
-        `http://localhost:5000/api/products/seller/${user._id}`
+        `https://electrons-1.onrender.com/api/products/seller/${user._id}`
       )
       const data = await res.json()
       setProducts(data)
@@ -90,7 +90,7 @@ const SellerAllProducts = () => {
   const deleteProduct = async (item: any) => {
     const confirmDelete = window.confirm(`Delete ${item.name}?`)
     if (!confirmDelete) return
-    await fetch(`http://localhost:5000/api/products/${item._id}`, {
+    await fetch(`https://electrons-1.onrender.com/api/products/${item._id}`, {
       method: "DELETE"
     })
     fetchProducts()
@@ -114,7 +114,7 @@ const SellerAllProducts = () => {
       image: photoEditImages[0] || ""
     }
     delete updatedProduct._id
-    await fetch(`http://localhost:5000/api/products/${photoEditProduct._id}`, {
+    await fetch(`https://electrons-1.onrender.com/api/products/${photoEditProduct._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedProduct)

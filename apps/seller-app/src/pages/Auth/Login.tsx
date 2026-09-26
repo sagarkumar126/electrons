@@ -25,7 +25,7 @@ const Login = () => {
       const photo = result.user.photoURL
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/google-login",
+        "https://electrons-1.onrender.com/api/auth/google-login",
         {
           email,
           name,

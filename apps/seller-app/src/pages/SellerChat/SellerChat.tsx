@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate, useLocation } from "react-router-dom"
 import { io } from "socket.io-client"
 
-const socket = io("http://localhost:5000")
+const socket = io("https://electrons-1.onrender.com")
 
 const SellerChat = () => {
   const { roomId } = useParams()
@@ -41,7 +41,7 @@ const SellerChat = () => {
 
   const fetchProductDetails = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${productId}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/products/${productId}`)
       const data = await res.json()
       setProductDetails(data)
     } catch (error) {
@@ -81,7 +81,7 @@ const SellerChat = () => {
 
   const fetchChatHistory = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/${currentRoomId}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/chat/${currentRoomId}`)
       const data = await res.json()
       console.log("🔵 Seller chat history:", data)
       setMessages(data.messages || [])
@@ -203,7 +203,7 @@ const SellerChat = () => {
 
       console.log("📦 Creating Order:", orderData)
 
-      const res = await fetch("http://localhost:5000/api/orders/create", {
+      const res = await fetch("https://electrons-1.onrender.com/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData)

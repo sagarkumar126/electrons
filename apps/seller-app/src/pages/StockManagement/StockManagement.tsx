@@ -15,7 +15,7 @@ const StockManagement = () => {
   const fetchProducts = async () => {
 
     const res = await fetch(
-      `http://localhost:5000/api/products/seller/${user._id}`
+      `https://electrons-1.onrender.com/api/products/seller/${user._id}`
     )
 
     const data = await res.json()

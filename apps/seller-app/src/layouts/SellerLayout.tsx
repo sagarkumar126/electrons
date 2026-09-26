@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import logo from "../assets/logo.png"
 import { io } from "socket.io-client"
 
-const socket = io("http://localhost:5000")
+const socket = io("https://electrons-1.onrender.com")
 
 const SellerLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate()
@@ -121,7 +121,7 @@ const SellerLayout = ({ children }: { children: React.ReactNode }) => {
 
     const primeCaches = async () => {
       try {
-        const rfqRes = await fetch(`http://localhost:5000/api/rfq/seller/${user._id}`)
+        const rfqRes = await fetch(`https://electrons-1.onrender.com/api/rfq/seller/${user._id}`)
         const rfqData = await rfqRes.json()
         if (rfqData.success && Array.isArray(rfqData.data)) {
           localStorage.setItem("seller_rfqs_cache", JSON.stringify(
@@ -130,7 +130,7 @@ const SellerLayout = ({ children }: { children: React.ReactNode }) => {
           setRfqCount(computeUnopenedRFQs())
         }
 
-        const reqRes = await fetch(`http://localhost:5000/api/buyer-requirement/seller/${user._id}`)
+        const reqRes = await fetch(`https://electrons-1.onrender.com/api/buyer-requirement/seller/${user._id}`)
         const reqData = await reqRes.json()
         if (reqData.success && Array.isArray(reqData.data)) {
           localStorage.setItem("seller_requirements_cache", JSON.stringify(

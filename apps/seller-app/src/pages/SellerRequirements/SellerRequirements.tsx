@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { io } from "socket.io-client"
 
-const socket = io("http://localhost:5000")
+const socket = io("https://electrons-1.onrender.com")
 
 const SellerRequirements = () => {
   const [requirements, setRequirements] = useState<any[]>([])
@@ -93,7 +93,7 @@ const SellerRequirements = () => {
   const fetchRequirements = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`http://localhost:5000/api/buyer-requirement/seller/${seller._id}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/buyer-requirement/seller/${seller._id}`)
       const data = await res.json()
       setRequirements(data.success ? data.data : [])
     } catch (error) {
@@ -106,7 +106,7 @@ const SellerRequirements = () => {
 
   const fetchChatHistory = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/${roomId}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/chat/${roomId}`)
       const data = await res.json()
       setChatMessages(data.messages || [])
     } catch (error) {

@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { socket } from "../../socket"
-// ✅ NEW IMPORT - LOCAL CATALOG
 import { searchCatalog } from "../../data/localProductCatalog"
+import { categories as hardcodedCategories, subCategories as hardcodedSubCategories } from "../../constants/categories"
 
 const SellerProducts = () => {
 
@@ -35,8 +35,14 @@ const SellerProducts = () => {
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
 
-  // ✅ FIXED: categories & sub-categories from API
-  const [apiCategories, setApiCategories] = useState<any[]>([])
+  // ✅ FIXED: use hardcoded categories directly (API optional)
+  const [apiCategories, setApiCategories] = useState<any[]>(
+    hardcodedCategories.map((catName: string, i: number) => ({
+      _id: String(i),
+      name: catName,
+      subCategories: hardcodedSubCategories[catName] || []
+    }))
+  )
 
   // ✅ AI SEARCH STATES
   const [aiQuery, setAiQuery] = useState("")
@@ -108,15 +114,18 @@ const SellerProducts = () => {
     }
   }, [user?._id])
 
-  // ✅ FIXED: load categories from API
+  // ✅ FIXED: try API, but keep hardcoded fallback
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("http://https://electrons-1.onrender.com/api/categories/all")
+        const res = await fetch("https://electrons-1.onrender.com/api/categories/all")
         const data = await res.json()
-        setApiCategories(data.data || [])
+        if (data?.data?.length > 0) {
+          setApiCategories(data.data)
+        }
+        // agar API empty/error → hardcoded categories rehti hain ✅
       } catch (err) {
-        console.error("Failed to load categories:", err)
+        console.error("Failed to load categories, using hardcoded:", err)
       }
     }
     load()
@@ -124,7 +133,7 @@ const SellerProducts = () => {
 
   const fetchProducts = async () => {
     const res = await fetch(
-      `http://https://electrons-1.onrender.com/api/products/seller/${user._id}`
+      `https://electrons-1.onrender.com/api/products/seller/${user._id}`
     )
     const data = await res.json()
     setProducts(data || [])
@@ -195,7 +204,7 @@ const SellerProducts = () => {
       if (!file) continue
       const formData = new FormData()
       formData.append("image", file)
-      const res = await fetch("http://https://electrons-1.onrender.com/api/upload", {
+      const res = await fetch("https://electrons-1.onrender.com/api/upload", {
         method: "POST",
         body: formData
       })
@@ -286,7 +295,7 @@ const SellerProducts = () => {
 
     const uploadedImages = await uploadImages()
 
-    await fetch("http://https://electrons-1.onrender.com/api/products", {
+    await fetch("https://electrons-1.onrender.com/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -327,7 +336,7 @@ const SellerProducts = () => {
     }
     const finalImages = [...oldImages, ...uploadedImages]
 
-    await fetch(`http://https://electrons-1.onrender.com/api/products/${editingId}`, {
+    await fetch(`https://electrons-1.onrender.com/api/products/${editingId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -396,14 +405,14 @@ const SellerProducts = () => {
     navigate("/login")
   }
 
-  // ✅ Get sub-categories for selected category from API
+  // ✅ Get sub-categories for selected category
   const selectedCategoryData = apiCategories.find((c: any) => c.name === category)
   const availableSubCategories: string[] = selectedCategoryData?.subCategories || []
 
   return (
     <div style={styles.page}>
       
-      {/* ✅ TOP BAR - Notification Bell + Logout + View All Button */}
+      {/* ✅ TOP BAR */}
       <div style={topBar}>
         <div style={topBarLeft}>
           <h2 style={pageTitle}>📦 Products</h2>
@@ -472,7 +481,7 @@ const SellerProducts = () => {
         </div>
       </div>
 
-      {/* ======== AI PRODUCT ASSISTANT ======== */}
+      {/* AI PRODUCT ASSISTANT */}
       <div style={styles.card}>
         <h2 style={styles.title}>🤖 AI Product Assistant</h2>
         <p style={styles.aiHelper}>
@@ -519,7 +528,7 @@ const SellerProducts = () => {
         </div>
       </div>
 
-      {/* ======== ADD/EDIT PRODUCT FORM ======== */}
+      {/* ADD/EDIT PRODUCT FORM */}
       <div ref={formRef} style={styles.card}>
         <h2 style={styles.title}>
           {editingId ? "Update Product" : "Add Product"}
@@ -553,7 +562,7 @@ const SellerProducts = () => {
           placeholder="Company/Brand *"
         />
 
-        {/* ✅ FIXED: category dropdown from API */}
+        {/* ✅ FIXED: category dropdown (hardcoded fallback) */}
         <select
           ref={categoryRef}
           style={styles.input}
@@ -569,7 +578,7 @@ const SellerProducts = () => {
           ))}
         </select>
 
-        {/* ✅ FIXED: sub-category dropdown from API */}
+        {/* ✅ FIXED: sub-category dropdown */}
         {category && availableSubCategories.length > 0 && (
           <select 
             style={styles.input} 
@@ -645,13 +654,12 @@ const SellerProducts = () => {
           </div>
         )}
 
-        {/* ✅ ORIGINAL ADD BUTTON - KEEP AS IS */}
         <button style={styles.mainBtn} onClick={editingId ? updateProduct : addProduct}>
           {editingId ? "Update Product" : "Add Product"}
         </button>
       </div>
 
-      {/* ✅ FLOATING RIGHT-SIDE PANEL - "+ Add More Photos" + File Inputs */}
+      {/* FLOATING PHOTO PANEL */}
       <div style={floatingPhotoPanel} ref={imagesRef}>
         <div style={panelHeader}>
           <span style={{ fontSize: "16px" }}>📸</span>
@@ -691,7 +699,7 @@ const SellerProducts = () => {
         </div>
       </div>
 
-      {/* ✅ FLOATING SAVE BUTTON - ALWAYS VISIBLE (RIGHT SIDE) */}
+      {/* FLOATING SAVE BUTTON */}
       <button
         onClick={editingId ? updateProduct : addProduct}
         style={floatingSaveBtn}

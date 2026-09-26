@@ -72,7 +72,7 @@ const SellerProfile = () => {
       }
 
       const res = await axios.put(
-        "http://localhost:5000/api/seller/update-profile",
+        "https://electrons-1.onrender.com/api/seller/update-profile",
         updatedUser
       )
 

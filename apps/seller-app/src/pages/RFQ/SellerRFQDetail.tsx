@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { io } from "socket.io-client"
 
-const socket = io("http://localhost:5000")
+const socket = io("https://electrons-1.onrender.com")
 
 const SellerRFQDetail = () => {
   const { id } = useParams()
@@ -150,7 +150,7 @@ const SellerRFQDetail = () => {
 
   const fetchRFQ = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/rfq/${id}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/rfq/${id}`)
       const data = await res.json()
       if (data.success) setRfq(data.data)
     } catch (error) {
@@ -162,7 +162,7 @@ const SellerRFQDetail = () => {
 
   const fetchChatHistory = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/${roomId}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/chat/${roomId}`)
       const data = await res.json()
       setChatMessages(data.messages || [])
     } catch (error) {
@@ -233,7 +233,7 @@ const SellerRFQDetail = () => {
         message: quoteMessage
       }
 
-      const res = await fetch(`http://localhost:5000/api/rfq/quote/${id}`, {
+      const res = await fetch(`https://electrons-1.onrender.com/api/rfq/quote/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(quoteData)
@@ -320,7 +320,7 @@ const SellerRFQDetail = () => {
       const advanceAmt = (priceToPay * advPercent) / 100
       const remainingAmt = priceToPay - advanceAmt
 
-      const res = await fetch(`http://localhost:5000/api/rfq/update-quote/${id}`, {
+      const res = await fetch(`https://electrons-1.onrender.com/api/rfq/update-quote/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

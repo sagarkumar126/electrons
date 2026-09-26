@@ -15,7 +15,7 @@ const ChatList = () => {
 
   const fetchChats = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/inbox/${user._id}`)
+      const res = await fetch(`https://electrons-1.onrender.com/api/chat/inbox/${user._id}`)
       const data = await res.json()
       setChats(data || [])
     } catch (error) {

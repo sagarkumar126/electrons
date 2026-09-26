@@ -40,7 +40,7 @@ const Register = () => {
         result.user.photoURL
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/google-register",
+        "https://electrons-1.onrender.com/api/auth/google-register",
         {
           email,
           name,

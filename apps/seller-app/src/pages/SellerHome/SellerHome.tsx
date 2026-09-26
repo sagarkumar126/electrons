@@ -17,9 +17,9 @@ const SellerHome = () => {
   const fetchAllData = async () => {
     try {
       const [productsRes, ordersRes, rfqsRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/products/seller/${user._id}`),
-        fetch(`http://localhost:5000/api/orders/seller/${user._id}`),
-        fetch(`http://localhost:5000/api/rfq/seller/${user._id}`)
+        fetch(`https://electrons-1.onrender.com/api/products/seller/${user._id}`),
+        fetch(`https://electrons-1.onrender.com/api/orders/seller/${user._id}`),
+        fetch(`https://electrons-1.onrender.com/api/rfq/seller/${user._id}`)
       ])
 
       const productsData = await productsRes.json()
